@@ -1,10 +1,10 @@
 package frc.robot.subsystems;
 
 import com.kauailabs.navx.frc.AHRS;
+import com.swervedrivespecialties.swervelib.MkSwerveModuleBuilder;
 import com.swervedrivespecialties.swervelib.MotorType;
 import com.swervedrivespecialties.swervelib.SdsModuleConfigurations;
 import com.swervedrivespecialties.swervelib.SwerveModule;
-import com.swervedrivespecialties.swervelib.ttb.TtbSwerveModuleBuilder;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -89,25 +89,25 @@ public class Drivetrain extends SubsystemBase {
     
     SmartDashboard.putData("gyro",gyro);
 
-    m_frontLeftModule = new TtbSwerveModuleBuilder()
+    m_frontLeftModule = new MkSwerveModuleBuilder()
     .withLayout(tab.getLayout("Front Left Module", BuiltInLayouts.kList)
             .withSize(2, 4)
             .withPosition(0, 0))
     .withGearRatio(SdsModuleConfigurations.MK4_L2)
     .withDriveMotor(MotorType.NEO, FRONT_LEFT_MODULE_DRIVE_MOTOR)
     .withSteerMotor(MotorType.NEO, FRONT_LEFT_MODULE_STEER_MOTOR)
-    .withSteerEncoderPort(FRONT_LEFT_MODULE_STEER_ENCODER)
+    .withSteerEncoderAnalogChannel(FRONT_LEFT_MODULE_STEER_ENCODER)
     .withSteerOffset(FRONT_LEFT_MODULE_STEER_OFFSET)
     .build();
 
-    m_frontRightModule = new TtbSwerveModuleBuilder()
+    m_frontRightModule = new MkSwerveModuleBuilder()
     .withLayout(tab.getLayout("Front Right Module", BuiltInLayouts.kList)
             .withSize(2, 4)
             .withPosition(2, 0))
     .withGearRatio(SdsModuleConfigurations.MK4_L2)
     .withDriveMotor(MotorType.NEO, FRONT_RIGHT_MODULE_DRIVE_MOTOR)
     .withSteerMotor(MotorType.NEO, FRONT_RIGHT_MODULE_STEER_MOTOR)
-    .withSteerEncoderPort(FRONT_RIGHT_MODULE_STEER_ENCODER)
+    .withSteerEncoderAnalogChannel(FRONT_RIGHT_MODULE_STEER_ENCODER)
     .withSteerOffset(FRONT_RIGHT_MODULE_STEER_OFFSET)
     .build();
 
@@ -115,25 +115,25 @@ public class Drivetrain extends SubsystemBase {
     var frontRightDrive = m_frontRightModule.getDriveMotor();
     frontRightDrive.setInverted(!frontRightDrive.getInverted());
 
-    m_backLeftModule = new TtbSwerveModuleBuilder()
+    m_backLeftModule = new MkSwerveModuleBuilder()
     .withLayout(tab.getLayout("Back Left Module", BuiltInLayouts.kList)
             .withSize(2, 4)
             .withPosition(4, 0))
     .withGearRatio(SdsModuleConfigurations.MK4_L2)
     .withDriveMotor(MotorType.NEO, BACK_LEFT_MODULE_DRIVE_MOTOR)
     .withSteerMotor(MotorType.NEO, BACK_LEFT_MODULE_STEER_MOTOR)
-    .withSteerEncoderPort(BACK_LEFT_MODULE_STEER_ENCODER)
+    .withSteerEncoderAnalogChannel(BACK_LEFT_MODULE_STEER_ENCODER)
     .withSteerOffset(BACK_LEFT_MODULE_STEER_OFFSET)
     .build();
 
-    m_backRightModule = new TtbSwerveModuleBuilder()
+    m_backRightModule = new MkSwerveModuleBuilder()
     .withLayout(tab.getLayout("Back Right Module", BuiltInLayouts.kList)
             .withSize(2, 4)
             .withPosition(6, 0))
     .withGearRatio(SdsModuleConfigurations.MK4_L2)
     .withDriveMotor(MotorType.NEO, BACK_RIGHT_MODULE_DRIVE_MOTOR)
     .withSteerMotor(MotorType.NEO, BACK_RIGHT_MODULE_STEER_MOTOR)
-    .withSteerEncoderPort(BACK_RIGHT_MODULE_STEER_ENCODER)
+    .withSteerEncoderAnalogChannel(BACK_RIGHT_MODULE_STEER_ENCODER)
     .withSteerOffset(BACK_RIGHT_MODULE_STEER_OFFSET)
     .build();
 
