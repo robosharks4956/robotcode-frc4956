@@ -12,8 +12,10 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.AutoBalance;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.Drivetrain;
 import static frc.robot.Constants.OperatorConstants.*;
@@ -111,16 +113,17 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // A command that does nothing
-    return Commands.run(()->{
-      drivetrain.drive(
-                        new ChassisSpeeds(
-                           0,
-                           1,
-                           0    
-                        )
-                );
+    //return new RunCommand(()->{
+     // drivetrain.drive(
+                        //new ChassisSpeeds(
+                           //0,
+                           //50,
+                          // 0    
+                        //)
+               // );
 
-    },drivetrain).withTimeout(5);
+    //},drivetrain).repeatedly().withTimeout(5);
+  return new AutoBalance(drivetrain);
   }
 
   private static double deadband(double value, double deadband) {

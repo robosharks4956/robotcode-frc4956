@@ -158,6 +158,12 @@ public class Drivetrain extends SubsystemBase {
   public void zeroGyroscope() {
     gyro.reset();
   }
+  public double getPitch() {
+        return gyro.getPitch();
+  }
+  public double getRoll() {
+        return gyro.getRoll();
+  }
 
   public Rotation2d getGyroscopeRotation() {
     return Rotation2d.fromDegrees(-gyro.getAngle());
