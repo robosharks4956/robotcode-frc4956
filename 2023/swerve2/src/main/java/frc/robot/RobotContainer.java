@@ -12,10 +12,15 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.AutoBalance;
 import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.subsystems.Crane;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Slider;
+
 import static frc.robot.Constants.OperatorConstants.*;
 
 import java.util.Map;
@@ -27,9 +32,13 @@ import java.util.Map;
 public class RobotContainer {
   
   private final Drivetrain drivetrain = new Drivetrain();
+  private final Crane crane = new Crane();
+  private final Slider slider = new Slider();
   public boolean fieldrelative = true;
 
+  
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
+  private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
   
   
@@ -79,6 +88,16 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
+  
+  crane.setDefaultCommand(new RunCommand(()->{
+    crane.set(supportController.getLeftY()*.4);
+  },crane));
+
+  slider.setDefaultCommand(new RunCommand(()->{
+    slider.set(supportController.getRightY()*.4);
+  },slider));
+  
+  
   }
 
   /**
@@ -111,16 +130,17 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // A command that does nothing
-    return Commands.run(()->{
-      drivetrain.drive(
-                        new ChassisSpeeds(
-                           0,
-                           1,
-                           0    
-                        )
-                );
+    //return new RunCommand(()->{
+     // drivetrain.drive(
+                        //new ChassisSpeeds(
+                           //0,
+                           //50,
+                          // 0    
+                        //)
+               // );
 
-    },drivetrain).withTimeout(5);
+    //},drivetrain).repeatedly().withTimeout(5);
+  return new AutoBalance(drivetrain);
   }
 
   private static double deadband(double value, double deadband) {
