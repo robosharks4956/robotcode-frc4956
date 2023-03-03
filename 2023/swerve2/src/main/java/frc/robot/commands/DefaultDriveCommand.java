@@ -1,9 +1,6 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Drivetrain;
 
@@ -18,7 +15,6 @@ public class DefaultDriveCommand extends CommandBase {
     private final DoubleSupplier m_rotationSupplier;
     private final BooleanSupplier m_fieldrelativeSupplier;
     private final DoubleSupplier m_maxspeedSupplier;
-
 
     public DefaultDriveCommand(Drivetrain drivetrainSubsystem,
                                DoubleSupplier translationXSupplier,
@@ -38,27 +34,29 @@ public class DefaultDriveCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // You can use `new ChassisSpeeds(...)` for robot-oriented movement instead of field-oriented movement
+
         double speedmultiplier = -m_maxspeedSupplier.getAsDouble();
         double rotatespeedmultiplier = speedmultiplier * 0.5;
-        if (m_fieldrelativeSupplier.getAsBoolean()==true){
-                 m_drivetrainSubsystem.drive(
+
+        if (m_fieldrelativeSupplier.getAsBoolean()) {
+            // Field-relative drive
+            m_drivetrainSubsystem.drive(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
-                            m_translationXSupplier.getAsDouble()*speedmultiplier,
-                            m_translationYSupplier.getAsDouble()*speedmultiplier,
-                            m_rotationSupplier.getAsDouble()* rotatespeedmultiplier,
+                            m_translationXSupplier.getAsDouble() * speedmultiplier,
+                            m_translationYSupplier.getAsDouble() * speedmultiplier,
+                            m_rotationSupplier.getAsDouble() * rotatespeedmultiplier,
                             m_drivetrainSubsystem.getGyroscopeRotation() 
                     )
             );    
-            }
-        else{
+        } else {
+            // Robot-relative drive
             m_drivetrainSubsystem.drive(
-                        new ChassisSpeeds(
-                                m_translationXSupplier.getAsDouble()*speedmultiplier,
-                                m_translationYSupplier.getAsDouble()*speedmultiplier,
-                                m_rotationSupplier.getAsDouble()*rotatespeedmultiplier
-                        )
-                );
+                new ChassisSpeeds(
+                    m_translationXSupplier.getAsDouble() * speedmultiplier,
+                    m_translationYSupplier.getAsDouble() * speedmultiplier,
+                    m_rotationSupplier.getAsDouble() * rotatespeedmultiplier
+                )
+            );
         }
     }
 
