@@ -10,10 +10,13 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DoubleSolenoidSubsystem extends SubsystemBase {
-  DoubleSolenoid solenoid; 
+  
+  DoubleSolenoid solenoid;
+
   public DoubleSolenoidSubsystem(int forward, int reverse) {
      solenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, forward, reverse);
   }
+
   public void set(boolean forward){
     solenoid.set(forward ? Value.kForward : Value.kReverse);
   }

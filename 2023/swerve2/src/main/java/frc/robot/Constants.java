@@ -22,8 +22,6 @@ public final class Constants {
      */
     public static final double DRIVETRAIN_WHEELBASE_METERS = 0.6477;
 
-    //public static final int DRIVETRAIN_PIGEON_ID = 0;
-
     public static final int FRONT_LEFT_MODULE_DRIVE_MOTOR = 21;
     public static final int FRONT_LEFT_MODULE_STEER_MOTOR = 22;
     public static final int FRONT_LEFT_MODULE_STEER_ENCODER = 0;
@@ -43,6 +41,11 @@ public final class Constants {
     public static final int BACK_RIGHT_MODULE_STEER_MOTOR = 28;
     public static final int BACK_RIGHT_MODULE_STEER_ENCODER = 3;
     public static final double BACK_RIGHT_MODULE_STEER_OFFSET = (.558); // FIXME Measure and set back right steer offset
+
+    public static final int BASE_SOLENOID_FORWARD = 0;
+    public static final int BASE_SOLENOID_REVERSE = 1;
+    public static final int GRABBER_SOLENOID_FORWARD = 2;
+    public static final int GRABBER_SOLENOID_REVERSE = 3;
   
     public static class OperatorConstants {
       public static final int kDriverControllerPort = 0;
