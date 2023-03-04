@@ -1,9 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
@@ -11,7 +9,6 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -39,9 +36,9 @@ public class RobotContainer {
   private final Crane crane = new Crane();
   private final Slider slider = new Slider();
   private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
-      BASE_SOLENOID_REVERSE);
+      BASE_SOLENOID_REVERSE, "Base Solenoid");
   private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
-      GRABBER_SOLENOID_REVERSE);
+      GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
 
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
@@ -116,6 +113,14 @@ public class RobotContainer {
     // No requirements because we don't need to interrupt anything
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
+    Trigger leftbumper = supportController.leftBumper();
+    leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
+    Trigger rightbumper = supportController.rightBumper();
+    rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
+    Trigger ybutton = supportController.y();
+    ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
+    Trigger abutton = supportController.a();
+    abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
   }
 
   /**
@@ -125,6 +130,14 @@ public class RobotContainer {
     ShuffleboardTab tab = Shuffleboard.getTab("Controls");
     tab
         .add("Reset Gyro", "Back Button");
+    tab
+        .add("Grabber Open", "Left Bumper");
+    tab
+        .add("Grabber Close", "Right Bumper");
+    tab 
+        .add("Baseslider Forward", "Y Button");
+    tab 
+        .add("Baseslider Backward", "A Button");
   }
 
   /**

@@ -14,13 +14,13 @@ public final class Constants {
      *
      * Should be measured from center to center.
      */
-    public static final double DRIVETRAIN_TRACKWIDTH_METERS = 0.5969;
+    public static final double DRIVETRAIN_TRACKWIDTH_METERS = 0.50165;
     /**
      * The front-to-back distance between the drivetrain wheels.
      *
      * Should be measured from center to center.
      */
-    public static final double DRIVETRAIN_WHEELBASE_METERS = 0.6477;
+    public static final double DRIVETRAIN_WHEELBASE_METERS = 0.6223;
 
     public static final int FRONT_LEFT_MODULE_DRIVE_MOTOR = 21;
     public static final int FRONT_LEFT_MODULE_STEER_MOTOR = 22;
