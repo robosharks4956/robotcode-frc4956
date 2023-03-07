@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -35,10 +37,10 @@ public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
   private final Crane crane = new Crane();
   private final Slider slider = new Slider();
-  private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
-      BASE_SOLENOID_REVERSE, "Base Solenoid");
-  private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
-      GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+  // private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
+ //     BASE_SOLENOID_REVERSE, "Base Solenoid");
+//  private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
+  //    GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
 
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
@@ -61,7 +63,7 @@ public class RobotContainer {
   private final SlewRateLimiter Xfilter = new SlewRateLimiter(10);
   private final SlewRateLimiter Yfilter = new SlewRateLimiter(10);
   private final SlewRateLimiter Rfilter = new SlewRateLimiter(10);
-
+  SendableChooser<Command> m_chooser = new SendableChooser<>();
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -90,13 +92,18 @@ public class RobotContainer {
     configureButtonBindings();
 
     crane.setDefaultCommand(new RunCommand(() -> {
-      crane.set(supportController.getLeftY() * .4);
-    }, crane));
+      crane.set(supportController.getLeftY() * -.7);
+     }, crane));
 
     slider.setDefaultCommand(new RunCommand(() -> {
-      slider.set(supportController.getRightY() * .4);
-    }, slider));
+      slider.set(supportController.getRightY() * .6);
+      }, slider));
 
+  
+    Command autobalance = new AutoBalance(drivetrain);
+    m_chooser.setDefaultOption("Autobalance", autobalance);
+    m_chooser.addOption("Nothing", new InstantCommand());
+    SmartDashboard.putData (m_chooser);
   }
 
   /**
@@ -113,14 +120,14 @@ public class RobotContainer {
     // No requirements because we don't need to interrupt anything
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
-    Trigger leftbumper = supportController.leftBumper();
-    leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
-    Trigger rightbumper = supportController.rightBumper();
-    rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
-    Trigger ybutton = supportController.y();
-    ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
-    Trigger abutton = supportController.a();
-    abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
+    //Trigger leftbumper = supportController.leftBumper();
+    //leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
+    //Trigger rightbumper = supportController.rightBumper();
+   // rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
+    //Trigger ybutton = supportController.y();
+    //ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
+    //Trigger abutton = supportController.a();
+    //abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
   }
 
   /**
@@ -157,7 +164,8 @@ public class RobotContainer {
     // );
 
     // },drivetrain).repeatedly().withTimeout(5);
-    return new AutoBalance(drivetrain);
+    // return new AutoBalance(drivetrain);
+    return m_chooser.getSelected();
   }
 
   private static double deadband(double value, double deadband) {

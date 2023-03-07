@@ -6,7 +6,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Slider extends SubsystemBase {
-  VictorSPX motor=new VictorSPX(1);
+  VictorSPX motor=new VictorSPX(55);
   public void set(double Power){
     motor.set(VictorSPXControlMode.PercentOutput, Power);
 
