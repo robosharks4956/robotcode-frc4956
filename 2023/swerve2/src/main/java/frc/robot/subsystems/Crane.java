@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Crane extends SubsystemBase {
-  TalonSRX motor=new TalonSRX(0);
+  TalonSRX motor=new TalonSRX(8);
   public void set(double Power){
     motor.set(TalonSRXControlMode.PercentOutput, Power);
 

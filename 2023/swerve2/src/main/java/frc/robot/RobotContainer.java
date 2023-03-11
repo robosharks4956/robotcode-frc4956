@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
@@ -17,6 +18,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AutoBalance;
 import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.commands.DistanceDrive;
+import frc.robot.commands.SliderHoldPosition;
 import frc.robot.subsystems.Crane;
 import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
@@ -37,10 +40,10 @@ public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
   private final Crane crane = new Crane();
   private final Slider slider = new Slider();
-  // private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
- //     BASE_SOLENOID_REVERSE, "Base Solenoid");
-//  private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
-  //    GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+ private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
+    BASE_SOLENOID_REVERSE, "Base Solenoid");
+ private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
+   GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
 
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
@@ -96,14 +99,19 @@ public class RobotContainer {
      }, crane));
 
     slider.setDefaultCommand(new RunCommand(() -> {
-      slider.set(supportController.getRightY() * .6);
+      slider.set(-Math.abs(supportController.getRightY()));
       }, slider));
 
   
     Command autobalance = new AutoBalance(drivetrain);
     m_chooser.setDefaultOption("Autobalance", autobalance);
     m_chooser.addOption("Nothing", new InstantCommand());
+    m_chooser.addOption("Mobility", getMobilityCommand());
+    m_chooser.addOption("Distance Drive", new DistanceDrive
+    (drivetrain, 10, 0));
     SmartDashboard.putData (m_chooser);
+
+    baseslider.set(true);
   }
 
   /**
@@ -120,14 +128,17 @@ public class RobotContainer {
     // No requirements because we don't need to interrupt anything
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
-    //Trigger leftbumper = supportController.leftBumper();
-    //leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
-    //Trigger rightbumper = supportController.rightBumper();
-   // rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
-    //Trigger ybutton = supportController.y();
-    //ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
-    //Trigger abutton = supportController.a();
-    //abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
+    Trigger leftbumper = supportController.leftBumper();
+    leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
+    Trigger rightbumper = supportController.rightBumper();
+    rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
+    Trigger ybutton = supportController.y();
+    ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
+    Trigger abutton = supportController.a();
+    abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
+    //Trigger xbutton = supportController.x();
+    //xbutton.onTrue(new SliderHoldPosition(slider));
+    //xbutton.onFalse(slider.getDefaultCommand());
   }
 
   /**
@@ -153,20 +164,20 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // A command that does nothing
-    // return new RunCommand(()->{
-    // drivetrain.drive(
-    // new ChassisSpeeds(
-    // 0,
-    // 50,
-    // 0
-    // )
-    // );
-
-    // },drivetrain).repeatedly().withTimeout(5);
-    // return new AutoBalance(drivetrain);
+    // Return the selected Autonomous from Shuffleboard
     return m_chooser.getSelected();
   }
+  private Command getMobilityCommand() {
+  return new RunCommand(()->{
+    drivetrain.drive(
+     new ChassisSpeeds(
+     0,
+     50,
+     0
+     )
+     );
+     },drivetrain).repeatedly().withTimeout(5);
+    }
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

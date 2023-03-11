@@ -209,11 +209,11 @@ public class Drivetrain extends SubsystemBase {
     odometry.update(getGyroscopeRotation(), getModulePositions());
   }
 
-  private double getPoseX() {
+  public double getPoseX() {
     return odometry.getPoseMeters().getX();
   }
 
-  private double getPoseY() {
+  public double getPoseY() {
     return odometry.getPoseMeters().getY();
   }
 
