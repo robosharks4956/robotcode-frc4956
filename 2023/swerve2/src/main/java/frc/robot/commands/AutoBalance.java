@@ -21,16 +21,16 @@ public class AutoBalance extends CommandBase {
   public void initialize() {
   }
 
-  static final double kOffBalanceAngleThresholdDegrees = 2;
-  static final double kOonBalanceAngleThresholdDegrees = 5;
+  static final double kOffBalanceAngleThresholdDegrees = 3;
+  static final double kOonBalanceAngleThresholdDegrees = 3;
   boolean autoBalanceXMode = false;
   boolean autoBalanceYMode = true;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double xAxisRate = 1;
-    double yAxisRate = 1;
+    double xAxisRate = 0;
+    double yAxisRate = 0;
     double pitchAngleDegrees = drive.getPitch();
     double rollAngleDegrees = drive.getRoll();
     SmartDashboard.putNumber("Pitch Angle", pitchAngleDegrees);
@@ -41,25 +41,27 @@ public class AutoBalance extends CommandBase {
     } else if (autoBalanceXMode && (Math.abs(pitchAngleDegrees) <= Math.abs(kOonBalanceAngleThresholdDegrees))) {
       autoBalanceXMode = false;
     }
-    if (!autoBalanceYMode && (Math.abs(pitchAngleDegrees) >= Math.abs(kOffBalanceAngleThresholdDegrees))) {
+    if (!autoBalanceYMode && (Math.abs(rollAngleDegrees) >= Math.abs(kOffBalanceAngleThresholdDegrees))) {
       autoBalanceYMode = true;
-    } else if (autoBalanceYMode && (Math.abs(pitchAngleDegrees) <= Math.abs(kOonBalanceAngleThresholdDegrees))) {
+    } else if (autoBalanceYMode && (Math.abs(rollAngleDegrees) <= Math.abs(kOonBalanceAngleThresholdDegrees))) {
       autoBalanceYMode = false;
     }
     if (autoBalanceXMode) {
       double pitchAngleRadians = pitchAngleDegrees * (Math.PI / 180.0);
-      xAxisRate = Math.sin(pitchAngleRadians) * -1;
+      xAxisRate = Math.sin(pitchAngleRadians);
     }
+    SmartDashboard.putNumber("X Axis Rate", xAxisRate);
+    SmartDashboard.putBoolean("Auto Balance X", autoBalanceXMode);
     if (autoBalanceYMode) {
-      double rollAngleRadians = rollAngleDegrees * (Math.PI / 180.0);
-      yAxisRate = Math.sin(rollAngleRadians) * -1;
+      double pitchAngleRadians = rollAngleDegrees * (Math.PI / 180.0);
+      yAxisRate = Math.sin(pitchAngleRadians);
     }
 
     try {
       drive.drive(
           new ChassisSpeeds(
-              xAxisRate * 40,
-              yAxisRate * 40,
+              xAxisRate * -80,
+              yAxisRate * 0,
               0));
     } catch (RuntimeException ex) {
       String err_string = "Drive system error:  " + ex.getMessage();

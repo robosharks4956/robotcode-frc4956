@@ -14,15 +14,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AutoBalance;
 import frc.robot.commands.DefaultDriveCommand;
-import frc.robot.commands.DistanceDrive;
-import frc.robot.commands.SliderHoldPosition;
 import frc.robot.subsystems.Crane;
 import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Latch;
 import frc.robot.subsystems.Slider;
 
 import static frc.robot.Constants.OperatorConstants.*;
@@ -37,13 +37,14 @@ import java.util.Map;
  */
 public class RobotContainer {
 
-  private final Drivetrain drivetrain = new Drivetrain();
+  public final Drivetrain drivetrain = new Drivetrain();
   private final Crane crane = new Crane();
   private final Slider slider = new Slider();
- private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
-    BASE_SOLENOID_REVERSE, "Base Solenoid");
- private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
-   GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+  private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
+      BASE_SOLENOID_REVERSE, "Base Solenoid");
+  private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
+      GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+  private final Latch latch = new Latch();
 
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
@@ -61,12 +62,11 @@ public class RobotContainer {
       .withWidget(BuiltInWidgets.kToggleSwitch)
       .getEntry();
 
-  private ShuffleboardTab autotab = Shuffleboard.getTab("Autonomous");
-
   private final SlewRateLimiter Xfilter = new SlewRateLimiter(10);
   private final SlewRateLimiter Yfilter = new SlewRateLimiter(10);
   private final SlewRateLimiter Rfilter = new SlewRateLimiter(10);
   SendableChooser<Command> m_chooser = new SendableChooser<>();
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -96,22 +96,58 @@ public class RobotContainer {
 
     crane.setDefaultCommand(new RunCommand(() -> {
       crane.set(supportController.getLeftY() * -.7);
-     }, crane));
+    }, crane));
 
     slider.setDefaultCommand(new RunCommand(() -> {
-      slider.set(-Math.abs(supportController.getRightY()));
-      }, slider));
+      slider.set(supportController.getRightY() * .5);
+    }, slider));
 
-  
-    Command autobalance = new AutoBalance(drivetrain);
-    m_chooser.setDefaultOption("Autobalance", autobalance);
-    m_chooser.addOption("Nothing", new InstantCommand());
-    m_chooser.addOption("Mobility", getMobilityCommand());
-    m_chooser.addOption("Distance Drive", new DistanceDrive
-    (drivetrain, 10, 0));
-    SmartDashboard.putData (m_chooser);
+    latch.setDefaultCommand(new RunCommand(() -> {
+      if (Math.abs(supportController.getLeftY()) > .05) {
+        latch.set(.25);
+      } else
+        latch.set(0);
+      // latch.set(((supportController.getRightTriggerAxis()-supportController.getLeftTriggerAxis())*.25));
+    }, latch));
 
-    baseslider.set(true);
+    m_chooser.setDefaultOption("Nothing", new InstantCommand());
+    m_chooser.addOption("Mobility", getMobilityCommand(4, 50));
+    // m_chooser.addOption("Distance Drive", new DistanceDrive
+    // (drivetrain, 2, 0));
+    m_chooser.addOption("Autobalance",
+        new SequentialCommandGroup(getMobilityCommand(3, 50),
+            getMobilityCommand(2, 30),
+            new AutoBalance(drivetrain)));
+    m_chooser.addOption("Cube",
+        new SequentialCommandGroup(getMobilityCommand(.25, -70),
+            getMobilityCommand(.25, 70)));
+    m_chooser.addOption("Cube & Mobility",
+        new SequentialCommandGroup(getMobilityCommand(.25, -70),
+            getMobilityCommand(.25, 70),
+            getMobilityCommand(3, 50)));
+    m_chooser.addOption("Autobalance & Cube",
+        new SequentialCommandGroup(getMobilityCommand(.25, -70),
+            getMobilityCommand(.25, 70),
+            getMobilityCommand(1.5, 50),
+            new AutoBalance(drivetrain)));
+    m_chooser.addOption("Autobalance & Mobility",
+        new SequentialCommandGroup(getMobilityCommand(3, 50),
+            getMobilityCommand(2, 30),
+            getMobilityCommand(2, -50),
+            getMobilityCommand(.5, -30),
+            new AutoBalance(drivetrain)));
+    m_chooser.addOption("Autobalance, Cube, Mobility",
+        new SequentialCommandGroup(getMobilityCommand(.25, -70),
+            getMobilityCommand(.25, 70),
+            getMobilityCommand(3, 50),
+            getMobilityCommand(2, 30),
+            getMobilityCommand(2, -50),
+            getMobilityCommand(.5, -30),
+            new AutoBalance(drivetrain)));
+    SmartDashboard.putData(m_chooser);
+
+    baseslider.set(false);
+    grabber.set(false);
   }
 
   /**
@@ -129,16 +165,21 @@ public class RobotContainer {
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
     Trigger leftbumper = supportController.leftBumper();
-    leftbumper.onTrue(new InstantCommand(()->grabber.set(false)) );
+    leftbumper.onTrue(new InstantCommand(() -> grabber.set(false)));
     Trigger rightbumper = supportController.rightBumper();
-    rightbumper.onTrue(new InstantCommand(()->grabber.set(true)) );
+    rightbumper.onTrue(new InstantCommand(() -> grabber.set(true)));
     Trigger ybutton = supportController.y();
-    ybutton.onTrue(new InstantCommand(()->baseslider.set(true)) );
+    ybutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
     Trigger abutton = supportController.a();
-    abutton.onTrue(new InstantCommand(()->baseslider.set(false)) );
-    //Trigger xbutton = supportController.x();
-    //xbutton.onTrue(new SliderHoldPosition(slider));
-    //xbutton.onFalse(slider.getDefaultCommand());
+    abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
+    Trigger backButton2 = supportController.back();
+    backButton2.onTrue(new InstantCommand(latch::ResetEncoder));
+    // Trigger xbutton = supportController.x();
+    // xbutton.onFalse(new LatchPID(latch, 0));
+    // xbutton.onTrue(new LatchPID(latch, 15));
+    // Trigger xbutton = supportController.x();
+    // xbutton.onTrue(new SliderHoldPosition(slider));
+    // xbutton.onFalse(slider.getDefaultCommand());
   }
 
   /**
@@ -152,9 +193,9 @@ public class RobotContainer {
         .add("Grabber Open", "Left Bumper");
     tab
         .add("Grabber Close", "Right Bumper");
-    tab 
+    tab
         .add("Baseslider Forward", "Y Button");
-    tab 
+    tab
         .add("Baseslider Backward", "A Button");
   }
 
@@ -167,17 +208,16 @@ public class RobotContainer {
     // Return the selected Autonomous from Shuffleboard
     return m_chooser.getSelected();
   }
-  private Command getMobilityCommand() {
-  return new RunCommand(()->{
-    drivetrain.drive(
-     new ChassisSpeeds(
-     0,
-     50,
-     0
-     )
-     );
-     },drivetrain).repeatedly().withTimeout(5);
-    }
+
+  private Command getMobilityCommand(double timeout, double speed) {
+    return new RunCommand(() -> {
+      drivetrain.drive(
+          new ChassisSpeeds(
+              -speed,
+              0,
+              0));
+    }, drivetrain).repeatedly().withTimeout(timeout);
+  }
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {

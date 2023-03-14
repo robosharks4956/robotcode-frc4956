@@ -5,27 +5,32 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
-import frc.robot.subsystems.Slider;
+import frc.robot.subsystems.Latch;
 
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class SliderHoldPosition extends PIDCommand {
+public class LatchPID extends PIDCommand {
   /** Creates a new SliderHoldPosition. */
-  public SliderHoldPosition(Slider slider) {
+  public LatchPID(Latch latch, double setpoint) {
     super(
         // The controller that the command will use
-        new PIDController(1, 0, 0),
+        new PIDController(.2, 0, 0),
         // This should return the measurement
-        () -> slider.encoder.getDistance(),
+        () -> latch.encoder.getDistance(),
         // This should return the setpoint (can also be a constant)
-        () -> slider.encoder.getDistance(),
+        () -> setpoint,
         // This uses the output
         output -> { 
-          slider.set(output);
+          latch.set(output);
+        SmartDashboard.putNumber("Latch Output", output);
+        SmartDashboard.putNumber("Latch Setpoint", setpoint);
         });
-      addRequirements(slider);
+
+      addRequirements(latch);
     // Use addRequirements() here to declare subsystem dependencies.
     // Configure additional PID options by calling `getController` here.
   }
