@@ -3,9 +3,11 @@ package frc.robot;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -22,6 +24,7 @@ import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.Crane;
 import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.LEDs;
 import frc.robot.subsystems.Latch;
 import frc.robot.subsystems.Slider;
 
@@ -45,14 +48,14 @@ public class RobotContainer {
   private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
       GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
   private final Latch latch = new Latch();
-
+  private final LEDs m_leds = new LEDs();
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
 
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
 
   private GenericEntry maxspeed = drivetab
-      .add("Max Speed", .25)
+      .add("Max Speed", .50)
       .withWidget(BuiltInWidgets.kNumberSlider)
       .withProperties(Map.of("min", 0, "max", 1))
       .getEntry();
@@ -84,7 +87,7 @@ public class RobotContainer {
         () -> -modifyAxis(Rfilter.calculate(driverController.getRightX()))
             * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
         () -> fieldrelative2.getBoolean(false),
-        () -> maxspeed.getDouble(.25)));
+        () -> maxspeed.getDouble(.50)));
     drivetab
         .addNumber("Voltage", () -> RobotController.getBatteryVoltage())
         .withWidget(BuiltInWidgets.kVoltageView)
@@ -94,48 +97,72 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
 
-    crane.setDefaultCommand(new RunCommand(() -> {
-      crane.set(supportController.getLeftY() * -.7);
-    }, crane));
+    
+    SlewRateLimiter craneLimiter = new SlewRateLimiter(.1);
+    boolean useVelocityControl = false;
+    if (useVelocityControl) {
+      // Crane with velocity control
+      crane.setDefaultCommand(new RunCommand(() -> {
+        if (Math.abs(supportController.getLeftY()) > .05) {
+          crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.6);
+        } else
+          crane.set(0);
+      }, crane));
+    } else {
+      // Crane with normal power
+      crane.setDefaultCommand(new RunCommand(() -> {
+        crane.set(supportController.getLeftY() *0.7);
+      }, crane));
+    }
 
     slider.setDefaultCommand(new RunCommand(() -> {
-      slider.set(supportController.getRightY() * .5);
+      // If we're 
+      if (supportController.getRightY() < 0) {
+        slider.set(supportController.getRightY() * .5);
+      } else {
+        slider.set(supportController.getRightY() * .2);
+      }
+      
     }, slider));
 
     latch.setDefaultCommand(new RunCommand(() -> {
       if (Math.abs(supportController.getLeftY()) > .05) {
-        latch.set(.25);
+        latch.set(.5);
       } else
         latch.set(0);
-      // latch.set(((supportController.getRightTriggerAxis()-supportController.getLeftTriggerAxis())*.25));
     }, latch));
 
     m_chooser.setDefaultOption("Nothing", new InstantCommand());
+
     m_chooser.addOption("Mobility", getMobilityCommand(4, 50));
-    // m_chooser.addOption("Distance Drive", new DistanceDrive
-    // (drivetrain, 2, 0));
+
     m_chooser.addOption("Autobalance",
         new SequentialCommandGroup(getMobilityCommand(3, 50),
             getMobilityCommand(2, 30),
             new AutoBalance(drivetrain)));
+
     m_chooser.addOption("Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70)));
+
     m_chooser.addOption("Cube & Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
             getMobilityCommand(3, 50)));
+
     m_chooser.addOption("Autobalance & Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
             getMobilityCommand(1.5, 50),
             new AutoBalance(drivetrain)));
+
     m_chooser.addOption("Autobalance & Mobility",
         new SequentialCommandGroup(getMobilityCommand(3, 50),
             getMobilityCommand(2, 30),
             getMobilityCommand(2, -50),
             getMobilityCommand(.5, -30),
             new AutoBalance(drivetrain)));
+
     m_chooser.addOption("Autobalance, Cube, Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
@@ -160,8 +187,7 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
 
-    // Back button zeros the gyroscope
-    // No requirements because we don't need to interrupt anything
+    // Driver back button zeros the gyroscope
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
     Trigger leftbumper = supportController.leftBumper();
@@ -174,12 +200,6 @@ public class RobotContainer {
     abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
     Trigger backButton2 = supportController.back();
     backButton2.onTrue(new InstantCommand(latch::ResetEncoder));
-    // Trigger xbutton = supportController.x();
-    // xbutton.onFalse(new LatchPID(latch, 0));
-    // xbutton.onTrue(new LatchPID(latch, 15));
-    // Trigger xbutton = supportController.x();
-    // xbutton.onTrue(new SliderHoldPosition(slider));
-    // xbutton.onFalse(slider.getDefaultCommand());
   }
 
   /**
@@ -187,22 +207,22 @@ public class RobotContainer {
    */
   private void putDriveControls() {
     ShuffleboardTab tab = Shuffleboard.getTab("Controls");
-    tab
-        .add("Reset Gyro", "Back Button");
-    tab
-        .add("Grabber Open", "Left Bumper");
-    tab
-        .add("Grabber Close", "Right Bumper");
-    tab
-        .add("Baseslider Forward", "Y Button");
-    tab
-        .add("Baseslider Backward", "A Button");
+    tab.add("Reset Gyro", "Driver Back Button");
+    tab.add("Grabber Open", "Left Bumper");
+    tab.add("Grabber Close", "Right Bumper");
+    tab.add("Base Cylinder Forward", "Y Button");
+    tab.add("Base Cylinder Backward", "A Button");
+    tab.add("Raise Arm", "Left Stick Up");
+    tab.add("Lower Arm", "Left Stick Down");
+    tab.add("Extend Arm Slider", "Right Stick Up");
+    tab.add("Retract Arm Slider", "Right Stick Down");
   }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
+   * 
    */
   public Command getAutonomousCommand() {
     // Return the selected Autonomous from Shuffleboard
@@ -239,5 +259,18 @@ public class RobotContainer {
     value = Math.copySign(value * value, value);
 
     return value;
+  }
+
+  public void setAllianceLEDs() {
+    if (DriverStation.getAlliance() == Alliance.Red) {
+      m_leds.setRed();
+    }
+    if (DriverStation.getAlliance() == Alliance.Blue) {
+      m_leds.setBlue();
+    }
+  }
+
+  public void setRainbow() {
+    m_leds.rainbow();
   }
 }

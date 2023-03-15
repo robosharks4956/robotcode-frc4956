@@ -8,20 +8,27 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Crane extends SubsystemBase {
-  TalonSRX motor=new TalonSRX(8);
-  public void set(double Power){
-    motor.set(TalonSRXControlMode.PercentOutput, Power);
+  TalonSRX motor = new TalonSRX(8);
 
-  motor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute);
-    motor.setSensorPhase(false);
-
-  }
   /** Creates a new Crane. */
-  public Crane() {}
+  public Crane() {
+    motor.setInverted(true);
+  }
+
+  public void set(double power) {
+    motor.set(TalonSRXControlMode.PercentOutput, power);
+
+    motor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute);
+    motor.setSensorPhase(false);
+  }
+
+  public void setVelocity(double velocity) {
+    motor.set(TalonSRXControlMode.Velocity, velocity);
+  }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber ("craneEncoder", motor.getSelectedSensorPosition(0));
-    // This method will be called once per scheduler run
+    SmartDashboard.putNumber("Crane Encoder", motor.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Crane Sensor Velocity", motor.getSelectedSensorVelocity());
   }
 }
