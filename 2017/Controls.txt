@@ -1,0 +1,34 @@
+Tesla Controls
+	Driver Controller Xbox
+		Left Stick - Turn
+		Right Trigger - Forwards 
+		Left Trigger - Backwards 
+		Speed 80% Default 
+			X - 100% speed	
+			B - 50% speed 
+		Y - Flashylights?
+		A - Flamethrower?
+	Support Controller Joystick
+		Lower arm
+		Raise arm
+		Release balls?
+		Climb roap
+		Descend roap
+		Rocket launcher?
+Edison Controls
+	Driver Controller Xbox
+	
+	Support Controller Joystick
+
+
+
+Stans Plans
+	test xbox controls
+	drive wheel encoders programed
+		waiting for encoder components
+	auton drives forward to peg and drops gear
+	auton drive forward and turns left/right to peg and drops gear (total of 3 modes)
+	test slower acceleration 
+		slower acceleration for support controller?
+	
+
