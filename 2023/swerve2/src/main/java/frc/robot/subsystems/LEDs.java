@@ -4,8 +4,12 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDs extends SubsystemBase {
@@ -13,6 +17,13 @@ public class LEDs extends SubsystemBase {
   AddressableLEDBuffer m_ledBuffer;
   public int m_rainbowFirstPixelHue;
   /** Creates a new LEDs. */
+  
+  private ShuffleboardTab supporttab = Shuffleboard.getTab("Support");
+
+  private GenericEntry LEDToggle = supporttab
+      .add("LEDs", true)
+      .withWidget(BuiltInWidgets.kToggleSwitch)
+      .getEntry();
   public LEDs() {
     m_led = new AddressableLED(1);
 
@@ -60,5 +71,9 @@ public class LEDs extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+  if (LEDToggle.getBoolean(true) == true) {
+    m_led.start();
+  }
+  else m_led.stop();
   }
 }

@@ -9,10 +9,21 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Crane extends SubsystemBase {
   TalonSRX motor = new TalonSRX(8);
-
+  public static final int kTimeoutMs = 30;
   /** Creates a new Crane. */
   public Crane() {
     motor.setInverted(true);
+    motor.configFactoryDefault();
+    motor.configNominalOutputForward(0, kTimeoutMs);
+    motor.configNominalOutputReverse(0, kTimeoutMs);
+    motor.configPeakOutputForward(1, kTimeoutMs);
+    motor.configPeakOutputReverse(-1, kTimeoutMs);
+    motor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute);
+    motor.setSensorPhase(false);
+    motor.config_kF(0, 0, kTimeoutMs);
+    motor.config_kP(0, 0.1, kTimeoutMs);
+    motor.config_kI(0, 0, kTimeoutMs);
+    motor.config_kD(0, 0, kTimeoutMs);
   }
 
   public void set(double power) {

@@ -87,7 +87,7 @@ public class RobotContainer {
         () -> -modifyAxis(Rfilter.calculate(driverController.getRightX()))
             * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
         () -> fieldrelative2.getBoolean(false),
-        () -> maxspeed.getDouble(.50)));
+        () -> maxspeed.getDouble(.75)));
     drivetab
         .addNumber("Voltage", () -> RobotController.getBatteryVoltage())
         .withWidget(BuiltInWidgets.kVoltageView)
@@ -103,15 +103,15 @@ public class RobotContainer {
     if (useVelocityControl) {
       // Crane with velocity control
       crane.setDefaultCommand(new RunCommand(() -> {
-        if (Math.abs(supportController.getLeftY()) > .05) {
-          crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.6);
-        } else
-          crane.set(0);
+        crane.setVelocity(supportController.getLeftY() *0.7);
       }, crane));
     } else {
       // Crane with normal power
       crane.setDefaultCommand(new RunCommand(() -> {
-        crane.set(supportController.getLeftY() *0.7);
+        if (Math.abs(supportController.getLeftY()) > .05) {
+          crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.6);
+        } else
+          crane.set(0);
       }, crane));
     }
 
@@ -132,43 +132,43 @@ public class RobotContainer {
         latch.set(0);
     }, latch));
 
-    m_chooser.setDefaultOption("Nothing", new InstantCommand());
+    m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
-    m_chooser.addOption("Mobility", getMobilityCommand(4, 50));
+    m_chooser.addOption("#2 Mobility", getMobilityCommand(4, 50));
 
-    m_chooser.addOption("Autobalance",
+    m_chooser.addOption("#3 Autobalance",
         new SequentialCommandGroup(getMobilityCommand(3, 50),
             getMobilityCommand(2, 30),
             new AutoBalance(drivetrain)));
 
-    m_chooser.addOption("Cube",
+    m_chooser.addOption("#4 Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70)));
 
-    m_chooser.addOption("Cube & Mobility",
+    m_chooser.addOption("#5 Cube & Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
             getMobilityCommand(3, 50)));
 
-    m_chooser.addOption("Autobalance & Cube",
+    m_chooser.addOption("#6 Autobalance & Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
             getMobilityCommand(1.5, 50),
             new AutoBalance(drivetrain)));
 
-    m_chooser.addOption("Autobalance & Mobility",
+    m_chooser.addOption("#7 Autobalance & Mobility",
         new SequentialCommandGroup(getMobilityCommand(3, 50),
-            getMobilityCommand(2, 30),
-            getMobilityCommand(2, -50),
+            getMobilityCommand(2.25, 30),
+            getMobilityCommand(2.25, -50),
             getMobilityCommand(.5, -30),
             new AutoBalance(drivetrain)));
 
-    m_chooser.addOption("Autobalance, Cube, Mobility",
+    m_chooser.addOption("#8 Autobalance, Cube, Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
             getMobilityCommand(3, 50),
-            getMobilityCommand(2, 30),
-            getMobilityCommand(2, -50),
+            getMobilityCommand(2.25, 30),
+            getMobilityCommand(2.25, -50),
             getMobilityCommand(.5, -30),
             new AutoBalance(drivetrain)));
     SmartDashboard.putData(m_chooser);
@@ -200,6 +200,9 @@ public class RobotContainer {
     abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
     Trigger backButton2 = supportController.back();
     backButton2.onTrue(new InstantCommand(latch::ResetEncoder));
+    Trigger bbutton = driverController.b();
+    bbutton.onTrue(new AutoBalance(drivetrain));
+    bbutton.onFalse(drivetrain.getDefaultCommand());
   }
 
   /**
