@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMax;
 import com.swervedrivespecialties.swervelib.MkSwerveModuleBuilder;
 import com.swervedrivespecialties.swervelib.MotorType;
 import com.swervedrivespecialties.swervelib.SdsModuleConfigurations;
@@ -110,6 +111,8 @@ public class Drivetrain extends SubsystemBase {
         .withSteerEncoderAnalogChannel(FRONT_RIGHT_MODULE_STEER_ENCODER)
         .withSteerOffset(FRONT_RIGHT_MODULE_STEER_OFFSET)
         .build();
+   
+
 
     // Invert front right because it's backwards for some reason
     var frontRightDrive = m_frontRightModule.getDriveMotor();
@@ -137,6 +140,15 @@ public class Drivetrain extends SubsystemBase {
         .withSteerOffset(BACK_RIGHT_MODULE_STEER_OFFSET)
         .build();
 
+ CANSparkMax spark1 = (CANSparkMax) m_frontRightModule.getDriveMotor();
+    spark1.setSmartCurrentLimit(30);
+    CANSparkMax spark2 = (CANSparkMax) m_frontLeftModule.getDriveMotor();
+    spark2.setSmartCurrentLimit(30);
+    CANSparkMax spark3 = (CANSparkMax) m_backRightModule.getDriveMotor();
+    spark3.setSmartCurrentLimit(30);
+    CANSparkMax spark4 = (CANSparkMax) m_backLeftModule.getDriveMotor();
+    spark4.setSmartCurrentLimit(30);
+
     odometry = new SwerveDriveOdometry(
         m_kinematics,
         getGyroscopeRotation(),
@@ -146,9 +158,11 @@ public class Drivetrain extends SubsystemBase {
         .withSize(2, 4)
         .withPosition(8, 0);
 
-    layout.addDouble("Pose Y", this::getPoseY);
-    layout.addDouble("Pose X", this::getPoseX);
-    layout.addDouble("Pose Rotation", this::getPoseRotation);
+    //layout.addDouble("Pose Y", this::getPoseY);
+    //layout.addDouble("Pose X", this::getPoseX);
+    //layout.addDouble("Pose Rotation", this::getPoseRotation);
+
+    // Adding to try to speed up drive
   }
 
   /**

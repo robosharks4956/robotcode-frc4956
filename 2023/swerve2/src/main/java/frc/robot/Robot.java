@@ -1,7 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -41,15 +40,17 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    double pitchAngleDegrees = m_robotContainer.drivetrain.getPitch();
-    double rollAngleDegrees = m_robotContainer.drivetrain.getRoll();
-    SmartDashboard.putNumber("Pitch Angle", pitchAngleDegrees);
-    SmartDashboard.putNumber("Roll Angle", rollAngleDegrees);
+    //double pitchAngleDegrees = m_robotContainer.drivetrain.getPitch();
+    //double rollAngleDegrees = m_robotContainer.drivetrain.getRoll();
+    //SmartDashboard.putNumber("Pitch Angle", pitchAngleDegrees);
+    //SmartDashboard.putNumber("Roll Angle", rollAngleDegrees);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    m_robotContainer.setAllianceLEDs();
+  }
 
   @Override
   public void disabledPeriodic() {}

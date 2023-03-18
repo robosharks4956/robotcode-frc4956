@@ -33,10 +33,14 @@ public class Crane extends SubsystemBase {
   public void setVelocity(double velocity) {
     motor.set(TalonSRXControlMode.Velocity, velocity);
   }
+  
+  public double getPosition(){
+    return motor.getSelectedSensorPosition(0);
+  }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Crane Encoder", motor.getSelectedSensorPosition(0));
-    SmartDashboard.putNumber("Crane Sensor Velocity", motor.getSelectedSensorVelocity());
+    //SmartDashboard.putNumber("Crane Encoder", motor.getSelectedSensorPosition(0));
+    //SmartDashboard.putNumber("Crane Sensor Velocity", motor.getSelectedSensorVelocity());
   }
 }

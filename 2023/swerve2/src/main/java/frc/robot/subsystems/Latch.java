@@ -12,18 +12,22 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Latch extends SubsystemBase {
-  /** Creates a new Latch. */
-  VictorSPX motor=new VictorSPX(56);
-    public void set(double Power){
-      motor.set(VictorSPXControlMode.PercentOutput, Power);
-    }
-    public Encoder encoder = new Encoder(0,1);
-    public void ResetEncoder(){
-      encoder.reset();
-    }
+
+  VictorSPX motor = new VictorSPX(56);
+
+  public void set(double Power) {
+    motor.set(VictorSPXControlMode.PercentOutput, Power);
+  }
+
+  public Encoder encoder = new Encoder(0, 1);
+
+  public void ResetEncoder() {
+    encoder.reset();
+  }
+
   public Latch() {
-    encoder.setDistancePerPulse(360.0/44.4);
-    SmartDashboard.putData("Slide Encoder", encoder);
+    encoder.setDistancePerPulse(360.0 / 44.4);
+    SmartDashboard.putData("Latch Encoder", encoder);
     motor.setInverted(true);
   }
 

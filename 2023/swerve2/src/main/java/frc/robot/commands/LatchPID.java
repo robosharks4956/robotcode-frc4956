@@ -25,8 +25,8 @@ public class LatchPID extends PIDCommand {
         // This uses the output
         output -> { 
           latch.set(output);
-        SmartDashboard.putNumber("Latch Output", output);
-        SmartDashboard.putNumber("Latch Setpoint", setpoint);
+        // SmartDashboard.putNumber("Latch Output", output);
+        // SmartDashboard.putNumber("Latch Setpoint", setpoint);
         });
 
       addRequirements(latch);

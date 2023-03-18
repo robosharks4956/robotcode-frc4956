@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDs extends SubsystemBase {
   AddressableLED m_led;
+  boolean ledStarted = false;
   AddressableLEDBuffer m_ledBuffer;
   public int m_rainbowFirstPixelHue;
   /** Creates a new LEDs. */
@@ -24,8 +25,9 @@ public class LEDs extends SubsystemBase {
       .add("LEDs", true)
       .withWidget(BuiltInWidgets.kToggleSwitch)
       .getEntry();
+
   public LEDs() {
-    m_led = new AddressableLED(1);
+    m_led = new AddressableLED(8);
 
     // Reuse buffer
     // Default to a length of 60, start empty output
@@ -72,8 +74,15 @@ public class LEDs extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
   if (LEDToggle.getBoolean(true) == true) {
-    m_led.start();
+    if (!ledStarted) {
+//      m_led.start();
+      ledStarted = true;
+    }
+
   }
-  else m_led.stop();
+  else {
+    ledStarted = false;
+    m_led.stop();
   }
+}
 }
