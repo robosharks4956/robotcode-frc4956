@@ -48,14 +48,14 @@ public class RobotContainer {
   private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
       GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
   private final Latch latch = new Latch();
-  private final LEDs m_leds = new LEDs();
+  // private final LEDs m_leds = new LEDs();
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
 
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
 
   private GenericEntry maxspeed = drivetab
-      .add("Max Speed", .50)
+      .add("Max Speed", .75)
       .withWidget(BuiltInWidgets.kNumberSlider)
       .withProperties(Map.of("min", 0, "max", 1))
       .getEntry();
@@ -98,18 +98,29 @@ public class RobotContainer {
     configureButtonBindings();
 
     
-    SlewRateLimiter craneLimiter = new SlewRateLimiter(.1);
+    SlewRateLimiter craneLimiter = new SlewRateLimiter(.4);
     boolean useVelocityControl = false;
     if (useVelocityControl) {
       // Crane with velocity control
       crane.setDefaultCommand(new RunCommand(() -> {
-        crane.setVelocity(supportController.getLeftY() *0.7);
+        crane.setVelocity(supportController.getLeftY() *15);
       }, crane));
     } else {
       // Crane with normal power
       crane.setDefaultCommand(new RunCommand(() -> {
         if (Math.abs(supportController.getLeftY()) > .05) {
-          crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.6);
+          if (supportController.getLeftY() < 0){
+            if (latch.encoder.getDistance() < 5){
+              crane.set(0);
+            }
+            else crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.3);
+          }
+          else 
+          {double cranespeed = .8;
+            if (supportController.x().getAsBoolean()== true) {
+              cranespeed = 1;
+            } 
+            crane.set(craneLimiter.calculate(supportController.getLeftY()) * cranespeed);}
         } else
           crane.set(0);
       }, crane));
@@ -118,16 +129,16 @@ public class RobotContainer {
     slider.setDefaultCommand(new RunCommand(() -> {
       // If we're 
       if (supportController.getRightY() < 0) {
-        slider.set(supportController.getRightY() * .5);
+        slider.set(supportController.getRightY() * .6);
       } else {
-        slider.set(supportController.getRightY() * .2);
+        slider.set(supportController.getRightY() * .3);
       }
       
     }, slider));
 
     latch.setDefaultCommand(new RunCommand(() -> {
       if (Math.abs(supportController.getLeftY()) > .05) {
-        latch.set(.5);
+        latch.set(.4);
       } else
         latch.set(0);
     }, latch));
@@ -148,7 +159,7 @@ public class RobotContainer {
     m_chooser.addOption("#5 Cube & Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
-            getMobilityCommand(3, 50)));
+            getMobilityCommand(4, 50)));
 
     m_chooser.addOption("#6 Autobalance & Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
@@ -266,14 +277,14 @@ public class RobotContainer {
 
   public void setAllianceLEDs() {
     if (DriverStation.getAlliance() == Alliance.Red) {
-      m_leds.setRed();
+      // m_leds.setRed();
     }
     if (DriverStation.getAlliance() == Alliance.Blue) {
-      m_leds.setBlue();
+      // m_leds.setBlue();
     }
   }
 
   public void setRainbow() {
-    m_leds.rainbow();
+    // m_leds.rainbow();
   }
 }
