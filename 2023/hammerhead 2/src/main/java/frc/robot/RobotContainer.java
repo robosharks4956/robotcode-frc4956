@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AutoBalance;
 // import frc.robot.commands.CranePositionControl;
  import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.subsystems.DoubleSolenoidSubsystem;
 // import frc.robot.subsystems.Crane;
 // import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
@@ -42,16 +43,18 @@ import java.util.Map;
 public class RobotContainer {
 
   public final Drivetrain drivetrain = new Drivetrain();
-  // private final Crane crane = new Crane();
+
   // private final Slider slider = new Slider();
-  // private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
-      // BASE_SOLENOID_REVERSE, "Base Solenoid");
-  // private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
-      // GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+  private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
+       BASE_SOLENOID_REVERSE, "Base Solenoid");
+   private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
+       GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
+  private final DoubleSolenoidSubsystem arm = new DoubleSolenoidSubsystem(ARM_SOLENOID_FORWARD,
+       ARM_SOLENOID_REVERSE, "Arm Solenoid");
   // private final Latch latch = new Latch();
  // private final LEDs m_leds = new LEDs();
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
-  // private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
+   private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
 
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
 
@@ -201,22 +204,27 @@ public class RobotContainer {
     // Driver back button zeros the gyroscope
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
-    // Trigger leftbumper = supportController.leftBumper();
-    // leftbumper.onTrue(new InstantCommand(() -> grabber.set(false)));
-    // Trigger rightbumper = supportController.rightBumper();
-    // rightbumper.onTrue(new InstantCommand(() -> grabber.set(true)));
-    // Trigger ybutton = supportController.y();
-    // ybutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
-    // Trigger abutton = supportController.a();
-    // abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
-    // Trigger backButton2 = supportController.back();
-    // backButton2.onTrue(new InstantCommand(latch::ResetEncoder));
+     Trigger leftbumper = supportController.leftBumper();
+     leftbumper.onTrue(new InstantCommand(() -> grabber.set(false)));
+     Trigger rightbumper = supportController.rightBumper();
+     rightbumper.onTrue(new InstantCommand(() -> grabber.set(true)));
+     Trigger ybutton = supportController.y();
+     ybutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
+     Trigger abutton = supportController.a();
+     abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
     Trigger bbutton = driverController.b();
     bbutton.onTrue(new AutoBalance(drivetrain));
     bbutton.onFalse(drivetrain.getDefaultCommand());
     Trigger rTrigger = driverController.rightTrigger();
     rTrigger.onTrue(new InstantCommand(()  -> maxspeed.setDouble(.25)));
     rTrigger.onFalse(new InstantCommand(() -> maxspeed.setDouble(1)));
+    Trigger xbutton = supportController.x();
+    xbutton.onTrue(new InstantCommand(() -> arm.set(true)));
+    Trigger bbutton2 = supportController.b();
+    bbutton2.onTrue(new InstantCommand(() -> arm.set(false)));
+    drivetab
+    .add("Gyro Reset", new InstantCommand(drivetrain::zeroGyroscope))
+    .withWidget(BuiltInWidgets.kCommand);
   }
 
   /**
