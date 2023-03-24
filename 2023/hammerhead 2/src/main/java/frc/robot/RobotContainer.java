@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -20,15 +21,11 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AutoBalance;
-// import frc.robot.commands.CranePositionControl;
  import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.DoubleSolenoidSubsystem;
-// import frc.robot.subsystems.Crane;
-// import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.LEDs;
-// import frc.robot.subsystems.Latch;
-// import frc.robot.subsystems.Slider;
+import frc.robot.subsystems.Slider;
 
 import static frc.robot.Constants.OperatorConstants.*;
 import static frc.robot.Constants.*;
@@ -44,19 +41,19 @@ public class RobotContainer {
 
   public final Drivetrain drivetrain = new Drivetrain();
 
-  // private final Slider slider = new Slider();
+   private final Slider slider = new Slider();
   private final DoubleSolenoidSubsystem baseslider = new DoubleSolenoidSubsystem(BASE_SOLENOID_FORWARD,
        BASE_SOLENOID_REVERSE, "Base Solenoid");
    private final DoubleSolenoidSubsystem grabber = new DoubleSolenoidSubsystem(GRABBER_SOLENOID_FORWARD,
        GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
   private final DoubleSolenoidSubsystem arm = new DoubleSolenoidSubsystem(ARM_SOLENOID_FORWARD,
        ARM_SOLENOID_REVERSE, "Arm Solenoid");
-  // private final Latch latch = new Latch();
- // private final LEDs m_leds = new LEDs();
+  // private final LEDs m_leds = new LEDs();
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
    private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
 
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
+  private ShuffleboardTab supporttab = Shuffleboard.getTab("Support");
 
   private GenericEntry maxspeed = drivetab
       .add("Max Speed", 1)
@@ -65,7 +62,7 @@ public class RobotContainer {
       .getEntry();
 
   private GenericEntry fieldrelative2 = drivetab
-      .add("Field Relative", false)
+      .add("Field Relative", true)
       .withWidget(BuiltInWidgets.kToggleSwitch)
       .getEntry();
 
@@ -90,7 +87,7 @@ public class RobotContainer {
         () -> -modifyAxis((driverController.getLeftX())) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
         () -> -modifyAxis((driverController.getRightX()))
             * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
-        () -> fieldrelative2.getBoolean(false),
+        () -> fieldrelative2.getBoolean(true),
         () -> maxspeed.getDouble(1)));
     drivetab
         .addNumber("Voltage", () -> RobotController.getBatteryVoltage())
@@ -101,50 +98,16 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
 
-    
-    // SlewRateLimiter craneLimiter = new SlewRateLimiter(.4);
-    // boolean useVelocityControl = false;
-    // if (useVelocityControl) {
-      // Crane with velocity control
-      // crane.setDefaultCommand(new CranePositionControl(crane, latch, supportController));
-     // } else {
-      // Crane with normal power
-    //   crane.setDefaultCommand(new RunCommand(() -> {
-    //     if (Math.abs(supportController.getLeftY()) > .03) {
-    //       if (supportController.getLeftY() < 0) {
-    //         if (latch.encoder.getDistance() < 5) {
-    //           crane.set(0);
-    //         } else 
-    //           crane.set(craneLimiter.calculate(supportController.getLeftY()) * 0.3);
-    //       }
-    //       else 
-    //       {
-    //         double cranespeed = 1.0;
-    //         if (supportController.x().getAsBoolean()== true) {
-    //           cranespeed = 1;
-    //         }
-    //         crane.set(craneLimiter.calculate(supportController.getLeftY()) * cranespeed);}
-    //     } else
-    //       crane.set(0);
-    //   }, crane));
-    // }
-
-    // slider.setDefaultCommand(new RunCommand(() -> {
-    //   // If we're 
-    //   if (supportController.getRightY() < 0) {
-    //     slider.set(supportController.getRightY() * .6);
-    //   } else {
-    //     slider.set(supportController.getRightY() * .4);
-    //   }
+    slider.setDefaultCommand(new RunCommand(() -> {
+      // If we're 
+      if (supportController.getRightY() < 0) {
+        slider.set(supportController.getRightY() * .3);
+      } else {
+        slider.set(supportController.getRightY() * .3);
+      }
       
-    // }, slider));
+    }, slider));
 
-    // latch.setDefaultCommand(new RunCommand(() -> {
-    //   if (Math.abs(supportController.getLeftY()) > .05) {
-    //     latch.set(.4);
-    //   } else
-    //     latch.set(0);
-    // }, latch));
 
     m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
@@ -187,8 +150,9 @@ public class RobotContainer {
             new AutoBalance(drivetrain)));
     SmartDashboard.putData(m_chooser);
 
-    // baseslider.set(false);
-    // grabber.set(false);
+    arm.set(false); 
+    baseslider.set(false);
+    grabber.set(false);
   }
 
   /**
@@ -209,9 +173,9 @@ public class RobotContainer {
      Trigger rightbumper = supportController.rightBumper();
      rightbumper.onTrue(new InstantCommand(() -> grabber.set(true)));
      Trigger ybutton = supportController.y();
-     ybutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
+     ybutton.onTrue(new InstantCommand(() -> arm.set(false)));
      Trigger abutton = supportController.a();
-     abutton.onTrue(new InstantCommand(() -> baseslider.set(false)));
+     abutton.onTrue(new InstantCommand(() -> arm.set(true)));
     Trigger bbutton = driverController.b();
     bbutton.onTrue(new AutoBalance(drivetrain));
     bbutton.onFalse(drivetrain.getDefaultCommand());
@@ -219,12 +183,35 @@ public class RobotContainer {
     rTrigger.onTrue(new InstantCommand(()  -> maxspeed.setDouble(.25)));
     rTrigger.onFalse(new InstantCommand(() -> maxspeed.setDouble(1)));
     Trigger xbutton = supportController.x();
-    xbutton.onTrue(new InstantCommand(() -> arm.set(true)));
+    xbutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
     Trigger bbutton2 = supportController.b();
-    bbutton2.onTrue(new InstantCommand(() -> arm.set(false)));
-    drivetab
-    .add("Gyro Reset", new InstantCommand(drivetrain::zeroGyroscope))
-    .withWidget(BuiltInWidgets.kCommand);
+    bbutton2.onTrue(new InstantCommand(() -> baseslider.set(false)));
+    
+    // ShuffleboardLayout drivecommands = drivetab
+    // .getLayout("Drive Commands");
+    // drivecommands
+    //    .add("Gyro Reset", new InstantCommand(drivetrain::zeroGyroscope))
+    //    .withWidget(BuiltInWidgets.kCommand);
+    // ShuffleboardLayout supportcommands = supporttab
+    // .getLayout("Support Commands");
+    //  supportcommands 
+    //   .add("Arm Up", arm.forwardCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
+    // supportcommands
+    //   .add("Arm Down", arm.reverseCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
+    // supportcommands
+    //   .add("Grabber Open", grabber.reverseCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
+    // supportcommands 
+    //   .add("Grabber Close", grabber.forwardCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
+    // supportcommands 
+    //   .add("Base Slider Forward", baseslider.forwardCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
+    // supportcommands
+    //   .add("Base Slider Reverse", baseslider.reverseCommand())
+    //   .withWidget(BuiltInWidgets.kCommand);
   }
 
   /**
@@ -286,16 +273,16 @@ public class RobotContainer {
     return value;
   }
 
-  public void setAllianceLEDs() {
-    if (DriverStation.getAlliance() == Alliance.Red) {
-       //m_leds.setRed();
-    }
-    if (DriverStation.getAlliance() == Alliance.Blue) {
-      // m_leds.setBlue();
-    }
-  }
+  // public void setAllianceLEDs() {
+  //   if (DriverStation.getAlliance() == Alliance.Red) {
+  //     m_leds.setColor(LEDs.Color.red);
+  //   }
+  //   if (DriverStation.getAlliance() == Alliance.Blue) {
+  //     m_leds.setColor(LEDs.Color.blue);
+  //   }
+  // }
 
   public void setRainbow() {
-    //m_leds.rainbow();
+    // m_leds.setColor(LEDs.Color.rainbow);
   }
 }

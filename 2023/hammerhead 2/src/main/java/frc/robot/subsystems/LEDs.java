@@ -27,7 +27,7 @@ public class LEDs extends SubsystemBase {
       .getEntry();
 
   public LEDs() {
-    m_led = new AddressableLED(8);
+    m_led = new AddressableLED(9);
 
     // Reuse buffer
     // Default to a length of 60, start empty output
@@ -70,6 +70,26 @@ public class LEDs extends SubsystemBase {
     m_led.setData(m_ledBuffer);
   }
 
+  public Color currentColor = Color.blue;
+  public void setColor(Color targetColor){
+    if (currentColor != targetColor){
+      if (targetColor == Color.blue){
+        setBlue();
+      }
+      if (targetColor == Color.red){
+        setRed();
+      }
+    }
+   currentColor = targetColor;
+
+  }
+
+  public enum Color {
+    red,
+    blue,
+    rainbow
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
@@ -83,6 +103,9 @@ public class LEDs extends SubsystemBase {
   else {
     ledStarted = false;
     m_led.stop();
+  } 
+  if (currentColor == Color.rainbow){
+    rainbow();
   }
 }
 }

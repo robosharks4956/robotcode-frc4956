@@ -6,7 +6,9 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 public class DoubleSolenoidSubsystem extends SubsystemBase {
   
@@ -20,6 +22,13 @@ public class DoubleSolenoidSubsystem extends SubsystemBase {
       .add(name, solenoid)
       .withWidget(BuiltInWidgets.kRelay);
     }
+  public Command forwardCommand() {
+    return new InstantCommand(() -> solenoid.set(Value.kForward));
+  }
+
+  public Command reverseCommand() {
+    return new InstantCommand(() -> solenoid.set(Value.kReverse));
+  }
 
   public void set(boolean forward){
     solenoid.set(forward ? Value.kForward : Value.kReverse);
