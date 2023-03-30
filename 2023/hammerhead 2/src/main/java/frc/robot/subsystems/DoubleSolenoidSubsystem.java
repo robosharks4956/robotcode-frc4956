@@ -12,10 +12,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 public class DoubleSolenoidSubsystem extends SubsystemBase {
   
-  DoubleSolenoid solenoid;
+   DoubleSolenoid solenoid;
 
   public DoubleSolenoidSubsystem(int forward, int reverse, String name) {
-     solenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, forward, reverse);
+      solenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, forward, reverse);
     
      ShuffleboardTab supporttab = Shuffleboard.getTab("Support");
      supporttab

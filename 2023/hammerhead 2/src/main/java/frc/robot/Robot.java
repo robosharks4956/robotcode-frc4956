@@ -49,7 +49,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    // m_robotContainer.setAllianceLEDs();
+     m_robotContainer.setAllianceLEDs();
   }
 
   @Override
@@ -80,7 +80,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    // m_robotContainer.setAllianceLEDs();
+     m_robotContainer.setAllianceLEDs();
   }
 
   /** This function is called periodically during operator control. */

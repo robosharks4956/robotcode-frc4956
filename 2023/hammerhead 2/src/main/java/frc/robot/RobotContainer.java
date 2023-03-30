@@ -3,8 +3,10 @@ package frc.robot;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -48,7 +50,7 @@ public class RobotContainer {
        GRABBER_SOLENOID_REVERSE, "Grabber Solenoid");
   private final DoubleSolenoidSubsystem arm = new DoubleSolenoidSubsystem(ARM_SOLENOID_FORWARD,
        ARM_SOLENOID_REVERSE, "Arm Solenoid");
-  // private final LEDs m_leds = new LEDs();
+   private final LEDs m_leds = new LEDs();
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
    private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
 
@@ -70,6 +72,8 @@ public class RobotContainer {
   // private final SlewRateLimiter Yfilter = new SlewRateLimiter(10);
   // private final SlewRateLimiter Rfilter = new SlewRateLimiter(10);
   SendableChooser<Command> m_chooser = new SendableChooser<>();
+
+  Compressor phCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -114,8 +118,8 @@ public class RobotContainer {
     m_chooser.addOption("#2 Mobility", getMobilityCommand(4.5, 50));
 
     m_chooser.addOption("#3 Autobalance",
-        new SequentialCommandGroup(getMobilityCommand(2, 50),
-            getMobilityCommand(1, 30),
+        new SequentialCommandGroup(getMobilityCommand(1.5, 70),
+            getMobilityCommand(.5, 45),
             new AutoBalance(drivetrain)));
 
     m_chooser.addOption("#4 Cube",
@@ -125,31 +129,34 @@ public class RobotContainer {
     m_chooser.addOption("#5 Cube & Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
+            getMobilityCommand(.5, -70),
             getMobilityCommand(4.5, 50)));
 
     m_chooser.addOption("#6 Autobalance & Cube",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
-            getMobilityCommand(1.5, 50),
+            getMobilityCommand(2, 70),
             new AutoBalance(drivetrain)));
 
     m_chooser.addOption("#7 Autobalance & Mobility",
-        new SequentialCommandGroup(getMobilityCommand(3, 50),
-            getMobilityCommand(2.25, 30),
-            getMobilityCommand(2.25, -50),
-            getMobilityCommand(.5, -30),
+        new SequentialCommandGroup(getMobilityCommand(2.5, 70),
+            getMobilityCommand(2, 45),
+            getMobilityCommand(1.75, -70),
+            getMobilityCommand(.5, -45),
             new AutoBalance(drivetrain)));
 
     m_chooser.addOption("#8 Autobalance, Cube, Mobility",
         new SequentialCommandGroup(getMobilityCommand(.25, -70),
             getMobilityCommand(.25, 70),
-            getMobilityCommand(3, 50),
-            getMobilityCommand(2.5, 30),
-            getMobilityCommand(2, -50),
-            getMobilityCommand(.5, -30),
+            getMobilityCommand(2.5, 70),
+            getMobilityCommand(2, 45),
+            getMobilityCommand(1.75, -70),
+            getMobilityCommand(.5, -45),
             new AutoBalance(drivetrain)));
     SmartDashboard.putData(m_chooser);
-
+    SmartDashboard.putData("Compressor", phCompressor);
+   // drivetab
+      // .addDouble("Compressor Reading", () -> phCompressor.getPressure());
     arm.set(false); 
     baseslider.set(false);
     grabber.set(false);
@@ -186,6 +193,9 @@ public class RobotContainer {
     xbutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
     Trigger bbutton2 = supportController.b();
     bbutton2.onTrue(new InstantCommand(() -> baseslider.set(false)));
+    // Trigger xbutton2 = driverController.x();
+    // xbutton2.onTrue(new InstantCommand(() -> m_leds.setColor(LEDs.Color.rainbow)));
+    // xbutton2.onFalse(new InstantCommand(() -> setAllianceLEDs()));
     
     // ShuffleboardLayout drivecommands = drivetab
     // .getLayout("Drive Commands");
@@ -244,10 +254,11 @@ public class RobotContainer {
   private Command getMobilityCommand(double timeout, double speed) {
     return new RunCommand(() -> {
       drivetrain.drive(
-          new ChassisSpeeds(
-              -speed,
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+          -speed,
               0,
-              0));
+              0,
+              drivetrain.getGyroscopeRotation()));
     }, drivetrain).repeatedly().withTimeout(timeout);
   }
 
@@ -273,16 +284,16 @@ public class RobotContainer {
     return value;
   }
 
-  // public void setAllianceLEDs() {
-  //   if (DriverStation.getAlliance() == Alliance.Red) {
-  //     m_leds.setColor(LEDs.Color.red);
-  //   }
-  //   if (DriverStation.getAlliance() == Alliance.Blue) {
-  //     m_leds.setColor(LEDs.Color.blue);
-  //   }
-  // }
+  public void setAllianceLEDs() {
+    if (DriverStation.getAlliance() == Alliance.Red) {
+      m_leds.setColor(LEDs.Color.red);
+    }
+    if (DriverStation.getAlliance() == Alliance.Blue) {
+      m_leds.setColor(LEDs.Color.blue);
+    }
+  }
 
   public void setRainbow() {
-    // m_leds.setColor(LEDs.Color.rainbow);
+     m_leds.setColor(LEDs.Color.rainbow);
   }
 }
