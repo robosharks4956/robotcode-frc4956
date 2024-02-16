@@ -13,7 +13,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -142,7 +141,7 @@ public class Drivetrain extends SubsystemBase {
         .withSteerOffset(BACK_RIGHT_MODULE_STEER_OFFSET)
         .build();
 
- CANSparkMax spark1 = (CANSparkMax) m_frontRightModule.getDriveMotor();
+    CANSparkMax spark1 = (CANSparkMax) m_frontRightModule.getDriveMotor();
     spark1.setSmartCurrentLimit(30);
     CANSparkMax spark2 = (CANSparkMax) m_frontLeftModule.getDriveMotor();
     spark2.setSmartCurrentLimit(30);
@@ -156,16 +155,6 @@ public class Drivetrain extends SubsystemBase {
         getGyroscopeRotation(),
         getModulePositions(),
         new Pose2d (0, 0, new Rotation2d(0)));
-
-    var layout = tab.getLayout("Odometry", BuiltInLayouts.kList)
-        .withSize(2, 4)
-        .withPosition(8, 0);
-
-    //layout.addDouble("Pose Y", this::getPoseY);
-    //layout.addDouble("Pose X", this::getPoseX);
-    //layout.addDouble("Pose Rotation", this::getPoseRotation);
-
-    // Adding to try to speed up drive
   }
 
   /**
@@ -232,10 +221,6 @@ public class Drivetrain extends SubsystemBase {
 
   public double getPoseY() {
     return odometry.getEstimatedPosition().getY();
-  }
-
-  private double getPoseRotation() {
-    return odometry.getEstimatedPosition().getRotation().getDegrees();
   }
 
   public void stop() {

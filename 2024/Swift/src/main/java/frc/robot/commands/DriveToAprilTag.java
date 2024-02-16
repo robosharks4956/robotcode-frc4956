@@ -6,49 +6,37 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoubleArraySubscriber;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.IntegerSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.subsystems.ColorSensor;
+import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.NoteCamera;
 
-public class DriveToNote extends Command {
+public class DriveToAprilTag extends Command {
   public Drivetrain drive;
-  public NoteCamera noteCamera;
-  CommandXboxController driveController;
-  ColorSensor sensor;
+  AprilTagCamera aprilTagCamera;
   double lastTargetX = 0;
   double lastTargetY = 0;
-  PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
-  PIDController speedPID = new PIDController(0.13, 0.5, 0.013);
+  PIDController turnPID = new PIDController(5, 0.4, 0.2);
+  PIDController speedPID = new PIDController(40, 10, 0.013);
   boolean hasTarget = false;
   double turnOutput = 0;
   double speedOutput = 0;
   Timer timer = new Timer();
+  boolean targetInRange = false;
 
 
-  public DriveToNote(Drivetrain drive, NoteCamera noteCamera, CommandXboxController driveController, ColorSensor sensor){
+  public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera){
     // Use addRequirements() here to declare subsystem dependencies.
-    addRequirements(drive, noteCamera);
+    addRequirements(drive, aprilTagCamera);
     this.drive = drive;
-    this.noteCamera = noteCamera;
-    this.driveController = driveController;
-    this.sensor = sensor;
-    SmartDashboard.putData("Turn PID", turnPID);
-    SmartDashboard.putData("Speed PID", speedPID);
+    SmartDashboard.putData("Tag Turn PID", turnPID);
+    SmartDashboard.putData("Tag Speed PID", speedPID);
     turnPID.setIntegratorRange(-15, 15);
-    turnPID.setIntegratorRange(-15, 15);
+    speedPID.setIntegratorRange(-100, 100);
     timer.start();
+    this.aprilTagCamera = aprilTagCamera;
+    //speedPID.setTolerance(.05);
   }
 
 
@@ -59,15 +47,18 @@ public class DriveToNote extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (noteCamera.hasTarget){
+    if (aprilTagCamera.hasTarget(7)){
       if (!hasTarget){
         hasTarget = true;
         turnPID.reset();
         speedPID.reset();
-        System.out.println("Note Seen " + timer.get());
+        System.out.println("Tag Seen " + timer.get());
       }
-      turnOutput = turnPID.calculate(noteCamera.lastNoteX*-1, 0);
-      speedOutput = speedPID.calculate(noteCamera.lastNoteY, 0);
+      turnOutput = turnPID.calculate(aprilTagCamera.getYaw(7)*-1, 0);
+      speedOutput = speedPID.calculate(aprilTagCamera.getDistance(7), 2);
+      if (Math.abs(aprilTagCamera.getDistance(7)-2) < .1){
+        targetInRange = true;
+      }
       SmartDashboard.putNumber("Turn Output", turnOutput);
       SmartDashboard.putNumber("Speed Output", speedOutput);
       drive.drive(
@@ -82,7 +73,7 @@ public class DriveToNote extends Command {
         timer.reset();
         System.out.println("Timer Reset");
       }
-      if (timer.hasElapsed(0.075) || noteCamera.lastNoteY < 30) {
+      if (timer.hasElapsed(0.1)) {
         drive.stop();
 
       }
@@ -96,13 +87,12 @@ public class DriveToNote extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    driveController.getHID().setRumble(RumbleType.kBothRumble, 0);
     drive.stop();
   }
 
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return sensor.get();
+    return targetInRange;
   }
 }

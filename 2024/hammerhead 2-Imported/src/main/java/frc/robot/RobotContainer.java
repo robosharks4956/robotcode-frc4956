@@ -25,7 +25,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AprilTag;
 import frc.robot.commands.AutoBalance;
  import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
+import frc.robot.commands.VibrateController;
+import frc.robot.subsystems.AprilTagCamera;
+import frc.robot.subsystems.ColorSensor;
 import frc.robot.subsystems.DoubleSolenoidSubsystem;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.LEDs;
@@ -57,6 +61,8 @@ public class RobotContainer {
   private final CommandXboxController driverController = new CommandXboxController(kDriverControllerPort);
    private final CommandXboxController supportController = new CommandXboxController(kSupportControllerPort);
    private final NoteCamera noteCamera = new NoteCamera(drivetrain);
+   private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
+   private final ColorSensor colorSensor = new ColorSensor();
 
   private ShuffleboardTab drivetab = Shuffleboard.getTab("Drive");
   private ShuffleboardTab supporttab = Shuffleboard.getTab("Support");
@@ -179,54 +185,13 @@ public class RobotContainer {
     // Driver back button zeros the gyroscope
     Trigger backButton = driverController.back();
     backButton.onTrue(new InstantCommand(drivetrain::zeroGyroscope));
-     Trigger leftbumper = supportController.leftBumper();
-     leftbumper.onTrue(new InstantCommand(() -> grabber.set(false)));
-     Trigger rightbumper = driverController.rightBumper();
-     rightbumper.toggleOnTrue(new DriveToNote(drivetrain, noteCamera));
-     //rightbumper.onTrue(new InstantCommand(() -> grabber.set(true)));
-     Trigger ybutton = supportController.y();
-     ybutton.onTrue(new InstantCommand(() -> arm.set(false)));
-     Trigger abutton = supportController.a();
-     abutton.onTrue(new InstantCommand(() -> arm.set(true)));
-    Trigger bbutton = driverController.b();
-    bbutton.onTrue(new AutoBalance(drivetrain));
-    bbutton.onFalse(drivetrain.getDefaultCommand());
-    Trigger rTrigger = driverController.rightTrigger();
-    rTrigger.onTrue(new InstantCommand(()  -> maxspeed.setDouble(.25)));
-    rTrigger.onFalse(new InstantCommand(() -> maxspeed.setDouble(1)));
-    Trigger xbutton = supportController.x();
-    xbutton.onTrue(new InstantCommand(() -> baseslider.set(true)));
-    Trigger bbutton2 = supportController.b();
-    bbutton2.onTrue(new InstantCommand(() -> baseslider.set(false)));
-    // Trigger xbutton2 = driverController.x();
-    // xbutton2.onTrue(new InstantCommand(() -> m_leds.setColor(LEDs.Color.rainbow)));
-    // xbutton2.onFalse(new InstantCommand(() -> setAllianceLEDs()));
-    
-    // ShuffleboardLayout drivecommands = drivetab
-    // .getLayout("Drive Commands");
-    // drivecommands
-    //    .add("Gyro Reset", new InstantCommand(drivetrain::zeroGyroscope))
-    //    .withWidget(BuiltInWidgets.kCommand);
-    // ShuffleboardLayout supportcommands = supporttab
-    // .getLayout("Support Commands");
-    //  supportcommands 
-    //   .add("Arm Up", arm.forwardCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
-    // supportcommands
-    //   .add("Arm Down", arm.reverseCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
-    // supportcommands
-    //   .add("Grabber Open", grabber.reverseCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
-    // supportcommands 
-    //   .add("Grabber Close", grabber.forwardCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
-    // supportcommands 
-    //   .add("Base Slider Forward", baseslider.forwardCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
-    // supportcommands
-    //   .add("Base Slider Reverse", baseslider.reverseCommand())
-    //   .withWidget(BuiltInWidgets.kCommand);
+    Trigger leftbumper = driverController.leftBumper();
+    leftbumper.whileTrue(new DriveToNote(drivetrain, noteCamera, driverController, colorSensor).andThen(new VibrateController(0.5, driverController, supportController)));
+    //leftbumper.onTrue(new InstantCommand(() -> grabber.set(false)));
+    Trigger rightbumper = driverController.rightBumper();
+    rightbumper.toggleOnTrue(new DriveToNote(drivetrain, noteCamera, driverController, colorSensor));
+    Trigger xbutton = driverController.x();
+    xbutton.whileTrue(new DriveToAprilTag(drivetrain, aprilTagCamera).andThen(new VibrateController(0.5, driverController, supportController)));
   }
 
   /**
@@ -235,14 +200,6 @@ public class RobotContainer {
   private void putDriveControls() {
     ShuffleboardTab tab = Shuffleboard.getTab("Controls");
     tab.add("Reset Gyro", "Driver Back Button");
-    // tab.add("Grabber Open", "Left Bumper");
-    // tab.add("Grabber Close", "Right Bumper");
-    // tab.add("Base Cylinder Forward", "Y Button");
-    // tab.add("Base Cylinder Backward", "A Button");
-    // tab.add("Raise Arm", "Left Stick Up");
-    // tab.add("Lower Arm", "Left Stick Down");
-    // tab.add("Extend Arm Slider", "Right Stick Up");
-    // tab.add("Retract Arm Slider", "Right Stick Down");
   }
 
   /**

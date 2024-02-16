@@ -6,19 +6,12 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoubleArraySubscriber;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.IntegerSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.subsystems.ColorSensor;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.NoteCamera;
 
@@ -26,7 +19,7 @@ public class DriveToNote extends Command {
   public Drivetrain drive;
   public NoteCamera noteCamera;
   CommandXboxController driveController;
-  ColorSensor sensor;
+  Intake intake;
   double lastTargetX = 0;
   double lastTargetY = 0;
   PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
@@ -37,13 +30,13 @@ public class DriveToNote extends Command {
   Timer timer = new Timer();
 
 
-  public DriveToNote(Drivetrain drive, NoteCamera noteCamera, CommandXboxController driveController, ColorSensor sensor){
+  public DriveToNote(Drivetrain drive, NoteCamera noteCamera, CommandXboxController driveController, Intake intake){
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(drive, noteCamera);
     this.drive = drive;
     this.noteCamera = noteCamera;
     this.driveController = driveController;
-    this.sensor = sensor;
+    this.intake = intake;
     SmartDashboard.putData("Turn PID", turnPID);
     SmartDashboard.putData("Speed PID", speedPID);
     turnPID.setIntegratorRange(-15, 15);
@@ -103,6 +96,6 @@ public class DriveToNote extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return sensor.get();
+    return intake.getTop();
   }
 }
