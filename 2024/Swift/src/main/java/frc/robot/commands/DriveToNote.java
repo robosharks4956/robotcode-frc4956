@@ -7,7 +7,6 @@ package frc.robot.commands;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -31,7 +30,6 @@ public class DriveToNote extends Command {
 
 
   public DriveToNote(Drivetrain drive, NoteCamera noteCamera, CommandXboxController driveController, Intake intake){
-    // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(drive, noteCamera);
     this.drive = drive;
     this.noteCamera = noteCamera;
@@ -47,7 +45,9 @@ public class DriveToNote extends Command {
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+    intake.setVelocity(1);
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
@@ -89,13 +89,13 @@ public class DriveToNote extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    driveController.getHID().setRumble(RumbleType.kBothRumble, 0);
     drive.stop();
+    intake.setVelocity(0);
   }
 
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return intake.getTop();
+    return intake.getColorSensor();
   }
 }

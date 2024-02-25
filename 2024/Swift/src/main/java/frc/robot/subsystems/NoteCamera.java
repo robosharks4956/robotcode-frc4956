@@ -28,7 +28,6 @@ private PhotonCamera cam = new PhotonCamera("Ring_Camera");
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
     var res = cam.getLatestResult();
     if (res.hasTargets()) {
       hasTarget = true;

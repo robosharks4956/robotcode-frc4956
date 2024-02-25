@@ -11,13 +11,13 @@ import frc.robot.subsystems.Shooter;
 
 public class Shoot extends Command {
     
-  Timer timer = new Timer();
+  private final Timer timer = new Timer();
 
-  Intake intake;
-  Shooter shooter;
+  private final Intake intake;
+  private final Shooter shooter;
   
-  double spinTime = 1;
-  double shootTime = 2;
+  private final double spinTime = 1;
+  private final double shootTime = 1;
 
   public Shoot(Intake intake, Shooter shooter) {
     this.intake = intake;
@@ -36,7 +36,7 @@ public class Shoot extends Command {
   @Override
   public void execute() {
     if (timer.hasElapsed(spinTime)) {
-      intake.set(1);
+      intake.setVelocity(-1);
     }
   }
 
@@ -44,7 +44,7 @@ public class Shoot extends Command {
   @Override
   public void end(boolean interrupted) {
     shooter.set(0);
-    intake.set(0);
+    intake.setVelocity(0);
   }
 
   // Returns true when the command should end.

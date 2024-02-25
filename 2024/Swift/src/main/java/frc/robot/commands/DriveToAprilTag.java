@@ -27,7 +27,6 @@ public class DriveToAprilTag extends Command {
 
 
   public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera){
-    // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(drive, aprilTagCamera);
     this.drive = drive;
     SmartDashboard.putData("Tag Turn PID", turnPID);
@@ -36,7 +35,6 @@ public class DriveToAprilTag extends Command {
     speedPID.setIntegratorRange(-100, 100);
     timer.start();
     this.aprilTagCamera = aprilTagCamera;
-    //speedPID.setTolerance(.05);
   }
 
 
