@@ -4,14 +4,15 @@
 
 package frc.robot;
 
-import frc.robot.commands.Autos;
 import frc.robot.commands.DefaultAim;
 import frc.robot.commands.DefaultClimb;
-import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.commands.DefaultDrive;
 import frc.robot.commands.DefaultIntake;
 import frc.robot.commands.DefaultShoot;
+import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
 import frc.robot.commands.Shoot;
+import frc.robot.commands.VibrateController;
 import frc.robot.subsystems.Aimer;
 import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Climber;
@@ -27,7 +28,9 @@ import java.util.Map;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -52,7 +55,7 @@ public class RobotContainer {
   private final Aimer aimer = new Aimer();
   private final Climber climber = new Climber();
   //private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
-  //private final NoteCamera noteCamera = new NoteCamera();
+  private final NoteCamera noteCamera = new NoteCamera();
   private final CommandXboxController driveController =
     new CommandXboxController(DRIVE_CONTROLLER_PORT);
   private final CommandXboxController supportController =
@@ -75,19 +78,20 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    intake.setDefaultCommand(new DefaultIntake(supportController, intake));
-    shooter.setDefaultCommand(new DefaultShoot(supportController, shooter));
-    aimer.setDefaultCommand(new DefaultAim(aimer, () -> MathUtil.applyDeadband(supportController.getRightY(), 0.05)));
-    climber.setDefaultCommand(new DefaultClimb(supportController, climber));
-    drivetrain.setDefaultCommand(new DefaultDriveCommand(
+    intake.setDefaultCommand(
+      new DefaultIntake(supportController, intake, new VibrateController(0.45, driveController, supportController)));
+    shooter.setDefaultCommand(new DefaultShoot(shooter, supportController));
+    aimer.setDefaultCommand(new DefaultAim(aimer, () -> modifyAxis(supportController.getRightY(), 0.05, 2)));
+    climber.setDefaultCommand(new DefaultClimb(climber, supportController));
+    drivetrain.setDefaultCommand(new DefaultDrive(
       drivetrain,
-      () -> -modifyAxis((driveController.getLeftY())) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
-      () -> -modifyAxis((driveController.getLeftX())) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
-      () -> -modifyAxis((driveController.getRightX()))
+      () -> -modifyAxis((driveController.getLeftY()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
+      () -> -modifyAxis((driveController.getLeftX()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
+      () -> -modifyAxis((driveController.getRightX()), 0.05, 2)
         * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
       () -> fieldrelative2.getBoolean(true),
       () -> maxspeed.getDouble(1)));
-      
+
     driveTab.addNumber("Voltage", () -> RobotController.getBatteryVoltage())
       .withWidget(BuiltInWidgets.kVoltageView)
       .withProperties(Map.of("min", 0, "max", 13));
@@ -111,16 +115,38 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    Trigger yButton = supportController.y();
-    yButton.whileTrue(new Shoot(intake, shooter));
+    // Run shoot command on Y button
+    final Trigger supportYButton = supportController.y();
+    supportYButton.whileTrue(new Shoot(intake, shooter));
 
     // Open climber latch servos on support controller A button press
-    Trigger aButton = supportController.a();
-    aButton.onTrue(new InstantCommand(()-> {climber.setLatch(true);}, climber));
+    final Trigger supportAButton = supportController.a();
+    supportAButton.onTrue(new InstantCommand(()-> {climber.setLatch(true);}, climber));
 
     // Close climber latch servos on support controller B button press
-    Trigger bButton = supportController.b();
-    bButton.onTrue(new InstantCommand(()-> {climber.setLatch(false);}, climber));
+    final Trigger supportBButton = supportController.b();
+    supportBButton.onTrue(new InstantCommand(()-> {climber.setLatch(false);}, climber));
+
+    // Reset gyro on driver back button press
+    final Trigger driverBackButton = driveController.back();
+    driverBackButton.onTrue(new InstantCommand(()->drivetrain.zeroGyroscope()));
+
+    /*final Trigger driverXButton = driveController.x();
+    driverXButton.onTrue(new InstantCommand(() -> {
+      if (DriverStation.getAlliance().get() == Alliance.Blue) {
+        new DriveToAprilTag(drivetrain, aprilTagCamera, AprilTagIDs.BLUE_SPEAKER).schedule();
+      }
+      if (DriverStation.getAlliance().get() == Alliance.Red) {
+        new DriveToAprilTag(drivetrain, aprilTagCamera, AprilTagIDs.RED_SPEAKER).schedule();
+      }
+    }));*/
+
+    final Trigger driverYButton = driveController.y();
+    driverYButton.whileTrue(new DriveToNote(drivetrain, noteCamera, intake));
+
+    // Vibrate controllers when color sensor detects a note
+    final Trigger colorSensorTrigger = new Trigger(() -> intake.getColorSensor());
+    colorSensorTrigger.onTrue(new VibrateController(0.45, driveController, supportController));
   }
 
   private Command getMobilityCommand(double timeout, double speed) {
@@ -146,9 +172,9 @@ public class RobotContainer {
     tab.add("Climb", "Support Left Stick (up/down)");
   }
 
-  private static double modifyAxis(double value) {
-    value = MathUtil.applyDeadband(value, 0.05);
-    value = Math.copySign(value * value, value);
+  private static double modifyAxis(double value, double deadband, double smoothing) {
+    value = MathUtil.applyDeadband(value, deadband);
+    value = Math.copySign(Math.pow(Math.abs(value), smoothing), value);
     return value;
   }
 
@@ -158,7 +184,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
     return m_chooser.getSelected();
   }
 }

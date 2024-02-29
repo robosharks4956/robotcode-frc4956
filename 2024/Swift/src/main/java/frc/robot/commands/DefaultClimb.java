@@ -12,12 +12,13 @@ import frc.robot.subsystems.Climber;
 public class DefaultClimb extends Command {
   private final Climber climber;
   private final CommandXboxController supportController;
+
   /** Creates a new DefaultCllimb. */
-  public DefaultClimb(CommandXboxController supportController, Climber climber) {
-    // Use addRequirements() here to declare subsystem dependencies.
-    addRequirements(climber);
+  public DefaultClimb(Climber climber, CommandXboxController supportController) {
     this.climber = climber;
     this.supportController = supportController;
+    
+    addRequirements(climber);
   }
 
   // Called when the command is initially scheduled.

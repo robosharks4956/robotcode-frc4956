@@ -11,13 +11,13 @@ import frc.robot.subsystems.Aimer;
 
 public class DefaultAim extends Command {
   private final Aimer aimer;
-
   private final DoubleSupplier movementSupplier;
 
   /** Creates a new DefaultAim. */
-  public DefaultAim(Aimer aimer, DoubleSupplier positionSupplier) {
+  public DefaultAim(Aimer aimer, DoubleSupplier movementSupplier) {
     this.aimer = aimer;
-    this.movementSupplier = positionSupplier;
+    this.movementSupplier = movementSupplier;
+    
     addRequirements(aimer);
   }
 

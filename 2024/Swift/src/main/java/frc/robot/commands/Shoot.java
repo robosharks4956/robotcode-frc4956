@@ -10,14 +10,8 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
 public class Shoot extends Command {
-    
-  private final Timer timer = new Timer();
-
   private final Intake intake;
   private final Shooter shooter;
-  
-  private final double spinTime = 1;
-  private final double shootTime = 1;
 
   public Shoot(Intake intake, Shooter shooter) {
     this.intake = intake;
@@ -25,12 +19,17 @@ public class Shoot extends Command {
     addRequirements(intake, shooter);
   }
 
+  private final Timer timer = new Timer();
+
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
     timer.restart();
     shooter.set(1);
   }
+
+  private final double spinTime = 1;
+  private final double shootTime = 1;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
@@ -50,9 +49,6 @@ public class Shoot extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    if (timer.hasElapsed(spinTime + shootTime)) {
-      return true;
-    }
-    return false;
+    return timer.hasElapsed(spinTime + shootTime);
   }
 }

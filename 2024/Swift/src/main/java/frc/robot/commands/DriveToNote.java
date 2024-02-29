@@ -9,31 +9,25 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.NoteCamera;
 
 public class DriveToNote extends Command {
-  public Drivetrain drive;
-  public NoteCamera noteCamera;
-  CommandXboxController driveController;
-  Intake intake;
-  double lastTargetX = 0;
-  double lastTargetY = 0;
+  private final Drivetrain drive;
+  private final NoteCamera noteCamera;
+  private final Intake intake;
+
   PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
   PIDController speedPID = new PIDController(0.13, 0.5, 0.013);
-  boolean hasTarget = false;
-  double turnOutput = 0;
-  double speedOutput = 0;
-  Timer timer = new Timer();
+
+  private final Timer timer = new Timer();
 
 
-  public DriveToNote(Drivetrain drive, NoteCamera noteCamera, CommandXboxController driveController, Intake intake){
+  public DriveToNote(Drivetrain drive, NoteCamera noteCamera, Intake intake){
     addRequirements(drive, noteCamera);
     this.drive = drive;
     this.noteCamera = noteCamera;
-    this.driveController = driveController;
     this.intake = intake;
     SmartDashboard.putData("Turn PID", turnPID);
     SmartDashboard.putData("Speed PID", speedPID);
@@ -48,6 +42,10 @@ public class DriveToNote extends Command {
   public void initialize() {
     intake.setVelocity(1);
   }
+
+  private double turnOutput = 0;
+  private double speedOutput = 0;
+  private boolean hasTarget = false;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
@@ -73,7 +71,6 @@ public class DriveToNote extends Command {
     else {
       if (hasTarget) {
         timer.reset();
-        System.out.println("Timer Reset");
       }
       if (timer.hasElapsed(0.075) || noteCamera.lastNoteY < 30) {
         drive.stop();
@@ -81,9 +78,6 @@ public class DriveToNote extends Command {
       }
       hasTarget = false;
     }
-  }
-
-  public void lookForTarget(double targetID) {
   }
 
   // Called once the command ends or is interrupted.

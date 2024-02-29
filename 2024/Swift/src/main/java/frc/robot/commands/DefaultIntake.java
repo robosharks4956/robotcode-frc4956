@@ -11,17 +11,21 @@ import frc.robot.subsystems.Intake;
 public class DefaultIntake extends Command {
   private final Intake intake;
   private final CommandXboxController supportController;
+  private final VibrateController vibrateController;
 
   /** Creates a new DefaultIntake. */
-  public DefaultIntake(CommandXboxController supportController, Intake intake) {
+  public DefaultIntake(CommandXboxController supportController, Intake intake, VibrateController vibrateController) {
     this.intake = intake;
     this.supportController = supportController;
+    this.vibrateController = vibrateController;
     addRequirements(intake);
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {}
+
+  private boolean colorSensorOutput;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
@@ -36,9 +40,10 @@ public class DefaultIntake extends Command {
       intake.setVelocity(0);
     }
 
-    //if (intake.getColorSensor()) {
-    //  new VibrateController(0.25, supportController).schedule();
-    //}
+    if (intake.getColorSensor() &&! colorSensorOutput) {
+      //vibrateController.schedule();
+    }
+    //colorSensorOutput = intake.getColorSensor();
   }
 
   // Called once the command ends or is interrupted.

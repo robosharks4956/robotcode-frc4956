@@ -9,13 +9,15 @@ import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.NoteMechanismIDs.*;
 
 public class Shooter extends SubsystemBase { 
   private final CANSparkMax motor = new CANSparkMax(SHOOTING_MOTOR, MotorType.kBrushless);
   private final CANSparkMax cornerMotor = new CANSparkMax(SHOOTER_CORNER_MOTOR, MotorType.kBrushless);
 
-  public Shooter() {}
+  public Shooter() {
+    motor.setInverted(true);
+  }
 
   @Override
   public void periodic() {

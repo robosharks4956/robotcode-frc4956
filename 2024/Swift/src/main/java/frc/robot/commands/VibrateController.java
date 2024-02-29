@@ -10,23 +10,24 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class VibrateController extends Command {
-  CommandXboxController[] controllers;
-  Timer timer = new Timer();
-  double time;
+  private final CommandXboxController[] controllers;
+
+  private final double time;
 
   /** Creates a new VibrateController. */
   public VibrateController(double time, CommandXboxController... controllers) {
     this.controllers = controllers;
     this.time = time;
-    // Use addRequirements() here to declare subsystem dependencies.
   }
+
+  private final Timer timer = new Timer();
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
     timer.restart();
     for (CommandXboxController controller : controllers) {
-          controller.getHID().setRumble(RumbleType.kBothRumble, 0.75);
+      controller.getHID().setRumble(RumbleType.kBothRumble, 0.75);
     }
   }
 

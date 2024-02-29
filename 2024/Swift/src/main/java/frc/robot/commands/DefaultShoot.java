@@ -10,12 +10,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Shooter;
 
 public class DefaultShoot extends Command {
-  private Shooter shooter;
-  CommandXboxController supportController;
+  private final Shooter shooter;
+  private final CommandXboxController supportController;
+
   /** Creates a new DefaultShoot. */
-  public DefaultShoot(CommandXboxController supportController, Shooter shooter) {
+  public DefaultShoot(Shooter shooter, CommandXboxController supportController) {
     this.supportController = supportController;
     this.shooter = shooter;
+    
     addRequirements(shooter);
   }
 
@@ -28,7 +30,7 @@ public class DefaultShoot extends Command {
   public void execute() {
     double leftTrigger = MathUtil.applyDeadband(supportController.getLeftTriggerAxis(), 0.05);
     double rightTrigger = MathUtil.applyDeadband(supportController.getRightTriggerAxis(), 0.05);
-    shooter.set((rightTrigger-leftTrigger) * 2);
+    shooter.set((rightTrigger - leftTrigger) * 2);
   }
 
   // Called once the command ends or is interrupted.

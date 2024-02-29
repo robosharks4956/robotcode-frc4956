@@ -13,28 +13,25 @@ import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Drivetrain;
 
 public class DriveToAprilTag extends Command {
-  public Drivetrain drive;
-  AprilTagCamera aprilTagCamera;
-  double lastTargetX = 0;
-  double lastTargetY = 0;
+  private final Drivetrain drive;
+  private final AprilTagCamera aprilTagCamera;
+  private final int id;
+
   PIDController turnPID = new PIDController(5, 0.4, 0.2);
   PIDController speedPID = new PIDController(40, 10, 0.013);
-  boolean hasTarget = false;
-  double turnOutput = 0;
-  double speedOutput = 0;
-  Timer timer = new Timer();
-  boolean targetInRange = false;
 
+  private final Timer timer = new Timer();
 
-  public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera){
+  public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera, int id) {
     addRequirements(drive, aprilTagCamera);
     this.drive = drive;
+    this.aprilTagCamera = aprilTagCamera;
+    this.id = id;
     SmartDashboard.putData("Tag Turn PID", turnPID);
     SmartDashboard.putData("Tag Speed PID", speedPID);
     turnPID.setIntegratorRange(-15, 15);
     speedPID.setIntegratorRange(-100, 100);
     timer.start();
-    this.aprilTagCamera = aprilTagCamera;
   }
 
 
@@ -42,19 +39,24 @@ public class DriveToAprilTag extends Command {
   @Override
   public void initialize() {}
 
+  private double turnOutput = 0;
+  private double speedOutput = 0;
+  private boolean hasTarget = false;
+  private boolean targetInRange = false;
+
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (aprilTagCamera.hasTarget(7)){
+    if (aprilTagCamera.hasTarget(id)){
       if (!hasTarget){
         hasTarget = true;
         turnPID.reset();
         speedPID.reset();
         System.out.println("Tag Seen " + timer.get());
       }
-      turnOutput = turnPID.calculate(aprilTagCamera.getYaw(7)*-1, 0);
-      speedOutput = speedPID.calculate(aprilTagCamera.getDistance(7), 2);
-      if (Math.abs(aprilTagCamera.getDistance(7)-2) < .1){
+      turnOutput = turnPID.calculate(aprilTagCamera.getYaw(id)*-1, 0);
+      speedOutput = speedPID.calculate(aprilTagCamera.getDistance(id), 2);
+      if (Math.abs(aprilTagCamera.getDistance(id)-2) < .1){
         targetInRange = true;
       }
       SmartDashboard.putNumber("Turn Output", turnOutput);
@@ -69,17 +71,12 @@ public class DriveToAprilTag extends Command {
     else {
       if (hasTarget) {
         timer.reset();
-        System.out.println("Timer Reset");
       }
       if (timer.hasElapsed(0.1)) {
         drive.stop();
-
       }
       hasTarget = false;
     }
-  }
-
-  public void lookForTarget(double targetID) {
   }
 
   // Called once the command ends or is interrupted.

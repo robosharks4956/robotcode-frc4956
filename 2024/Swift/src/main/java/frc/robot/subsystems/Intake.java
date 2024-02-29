@@ -12,7 +12,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.NoteMechanismIDs.*;
 
 public class Intake extends SubsystemBase {
   private final DigitalInput colorSensor = new DigitalInput(COLOR_SENSOR);
@@ -25,9 +25,9 @@ public class Intake extends SubsystemBase {
   public Intake() {
     m_pidController = motor.getPIDController();
     m_encoder = motor.getEncoder();
-    kP = 0.00055; 
+    kP = 0.0035; 
     kI = 0;
-    kD = 0.0144; 
+    kD = 0.0244; 
     kIz = 0; 
     kFF = 0; 
     kMaxOutput = 1; 
@@ -65,7 +65,7 @@ public class Intake extends SubsystemBase {
 
     double setPoint = velocity*maxRPM;
     m_pidController.setReference(setPoint, CANSparkMax.ControlType.kVelocity);
-    SmartDashboard.putNumber("Intake SetPoint", setPoint);
-    SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
+    //SmartDashboard.putNumber("Intake SetPoint", setPoint);
+    //SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
   }
 }

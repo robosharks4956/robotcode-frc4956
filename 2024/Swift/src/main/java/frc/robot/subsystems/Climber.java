@@ -1,13 +1,6 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
-import static frc.robot.Constants.CLIMBER_LEFT_MOTOR;
-import static frc.robot.Constants.CLIMBER_RIGHT_MOTOR;
-import static frc.robot.Constants.LATCH_LEFT_SERVO;
-import static frc.robot.Constants.LATCH_RIGHT_SERVO;
+import static frc.robot.Constants.ClimberIDsAndPorts.*;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
@@ -21,14 +14,14 @@ public class Climber extends SubsystemBase {
   private final Servo leftLatch = new Servo(LATCH_LEFT_SERVO);
   private final Servo rightLatch = new Servo(LATCH_RIGHT_SERVO);
   double leftOpen = 0;
-  double leftClosed = 1;
+  double leftClosed = 0.5;
   double rightOpen = 0;
-  double rightClosed = 1;
+  double rightClosed = 0.5;
   boolean latchOpen = false;
 
   public void set(double power){
-    leftMotor.set(ControlMode.PercentOutput, power * 0.5);
-    rightMotor.set(ControlMode.PercentOutput, power * 0.5);
+    leftMotor.set(ControlMode.PercentOutput, -power * 0.55);
+    rightMotor.set(ControlMode.PercentOutput, power * 0.55);
   }
 
   public Climber() {

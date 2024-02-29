@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.DriveConstants.*;
 
 public class Drivetrain extends SubsystemBase {
   /**
@@ -175,7 +175,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public Rotation2d getGyroscopeRotation() {
-    return Rotation2d.fromDegrees(-gyro.getAngle());
+   return Rotation2d.fromDegrees(-gyro.getAngle());
   }
 
   /**
