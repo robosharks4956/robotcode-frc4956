@@ -12,6 +12,7 @@ import frc.robot.commands.DefaultShoot;
 import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
 import frc.robot.commands.Shoot;
+import frc.robot.commands.TimedIntake;
 import frc.robot.commands.VibrateController;
 import frc.robot.subsystems.Aimer;
 import frc.robot.subsystems.AprilTagCamera;
@@ -38,7 +39,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -71,7 +74,6 @@ public class RobotContainer {
     .add("Field Relative", true)
     .withWidget(BuiltInWidgets.kToggleSwitch)
     .getEntry();
-
   private ShuffleboardTab supportTab = Shuffleboard.getTab("Support");
 
   SendableChooser<Command> m_chooser = new SendableChooser<>();
@@ -79,7 +81,7 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     intake.setDefaultCommand(
-      new DefaultIntake(supportController, intake, new VibrateController(0.45, driveController, supportController)));
+      new DefaultIntake(supportController, intake));
     shooter.setDefaultCommand(new DefaultShoot(shooter, supportController));
     aimer.setDefaultCommand(new DefaultAim(aimer, () -> modifyAxis(supportController.getRightY(), 0.05, 2)));
     climber.setDefaultCommand(new DefaultClimb(climber, supportController));
@@ -98,8 +100,16 @@ public class RobotContainer {
     putDriveControls(); 
 
     m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
-    m_chooser.addOption("#2 Leave", getMobilityCommand(1.5, 50));
-    //m_chooser.addOption("#3 Drive to Note", new DriveToNote(drivetrain, noteCamera, driveController, intake));
+    m_chooser.addOption("#2 Leave", getMobilityCommand(1.5, 70));
+    m_chooser.addOption("#3 Shoot, Drive to Note", new Shoot(intake, shooter)
+      .andThen(new DriveToNote(drivetrain, noteCamera, intake)));
+    m_chooser.addOption("#4 Shoot and Leave", new Shoot(intake, shooter)
+      .andThen(getMobilityCommand(1.5, 70)));
+    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new Shoot(intake, shooter)
+      .andThen(new DriveToNote(drivetrain, noteCamera, intake))
+      .andThen(new TimedIntake(intake, .25))
+     .andThen(getMobilityCommand(1.5, -50))
+      .andThen(new Shoot(intake, shooter)));
     SmartDashboard.putData(m_chooser);
 
     configureBindings();
@@ -146,7 +156,11 @@ public class RobotContainer {
 
     // Vibrate controllers when color sensor detects a note
     final Trigger colorSensorTrigger = new Trigger(() -> intake.getColorSensor());
-    colorSensorTrigger.onTrue(new VibrateController(0.45, driveController, supportController));
+    colorSensorTrigger.onTrue(new VibrateController(0.55, 1, driveController, supportController));
+
+    final Trigger foundTargetTrigger = new Trigger(() -> noteCamera.hasTarget);
+    foundTargetTrigger.whileTrue(
+      new VibrateController(0.1, 0.5, driveController, supportController).andThen(new WaitCommand(0.15)).repeatedly());
   }
 
   private Command getMobilityCommand(double timeout, double speed) {

@@ -28,8 +28,8 @@ public class Shoot extends Command {
     shooter.set(1);
   }
 
-  private final double spinTime = 1;
-  private final double shootTime = 1;
+  private final double spinTime = .5;
+  private final double shootTime = .9;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override

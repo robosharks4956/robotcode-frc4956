@@ -13,11 +13,13 @@ public class VibrateController extends Command {
   private final CommandXboxController[] controllers;
 
   private final double time;
+  private final double intensity;
 
   /** Creates a new VibrateController. */
-  public VibrateController(double time, CommandXboxController... controllers) {
+  public VibrateController(double time, double intensity, CommandXboxController... controllers) {
     this.controllers = controllers;
     this.time = time;
+    this.intensity = intensity;
   }
 
   private final Timer timer = new Timer();
@@ -27,7 +29,7 @@ public class VibrateController extends Command {
   public void initialize() {
     timer.restart();
     for (CommandXboxController controller : controllers) {
-      controller.getHID().setRumble(RumbleType.kBothRumble, 0.75);
+      controller.getHID().setRumble(RumbleType.kBothRumble, intensity);
     }
   }
 

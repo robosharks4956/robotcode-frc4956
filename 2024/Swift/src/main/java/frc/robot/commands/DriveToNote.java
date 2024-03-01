@@ -25,7 +25,7 @@ public class DriveToNote extends Command {
 
 
   public DriveToNote(Drivetrain drive, NoteCamera noteCamera, Intake intake){
-    addRequirements(drive, noteCamera);
+    addRequirements(drive, noteCamera, intake);
     this.drive = drive;
     this.noteCamera = noteCamera;
     this.intake = intake;
@@ -40,7 +40,7 @@ public class DriveToNote extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    intake.setVelocity(1);
+    intake.setVelocity(-1);
   }
 
   private double turnOutput = 0;
@@ -72,7 +72,7 @@ public class DriveToNote extends Command {
       if (hasTarget) {
         timer.reset();
       }
-      if (timer.hasElapsed(0.075) || noteCamera.lastNoteY < 30) {
+      if (timer.hasElapsed(0.175) || noteCamera.lastNoteY < 30) {
         drive.stop();
 
       }

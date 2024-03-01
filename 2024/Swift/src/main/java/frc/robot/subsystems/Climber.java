@@ -15,8 +15,8 @@ public class Climber extends SubsystemBase {
   private final Servo rightLatch = new Servo(LATCH_RIGHT_SERVO);
   double leftOpen = 0;
   double leftClosed = 0.5;
-  double rightOpen = 0;
-  double rightClosed = 0.5;
+  double rightOpen = 0.5;
+  double rightClosed = 0;
   boolean latchOpen = false;
 
   public void set(double power){
