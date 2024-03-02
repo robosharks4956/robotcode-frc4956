@@ -28,9 +28,14 @@ public class DefaultShoot extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double leftTrigger = MathUtil.applyDeadband(supportController.getLeftTriggerAxis(), 0.05);
-    double rightTrigger = MathUtil.applyDeadband(supportController.getRightTriggerAxis(), 0.05);
-    shooter.set((rightTrigger - leftTrigger) * 2);
+    if (supportController.getHID().getXButton()) {
+      shooter.set(.5);
+    }
+    else {
+      double leftTrigger = MathUtil.applyDeadband(supportController.getLeftTriggerAxis(), 0.05);
+      double rightTrigger = MathUtil.applyDeadband(supportController.getRightTriggerAxis(), 0.05);
+      shooter.set((rightTrigger - leftTrigger) * 2);
+    }
   }
 
   // Called once the command ends or is interrupted.

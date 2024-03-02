@@ -14,14 +14,14 @@ public class Climber extends SubsystemBase {
   private final Servo leftLatch = new Servo(LATCH_LEFT_SERVO);
   private final Servo rightLatch = new Servo(LATCH_RIGHT_SERVO);
   double leftOpen = 0;
-  double leftClosed = 0.5;
+  double leftClosed = 0.25;
   double rightOpen = 0.5;
-  double rightClosed = 0;
+  double rightClosed = 0.1;
   boolean latchOpen = false;
 
   public void set(double power){
-    leftMotor.set(ControlMode.PercentOutput, -power * 0.55);
-    rightMotor.set(ControlMode.PercentOutput, power * 0.55);
+    leftMotor.set(ControlMode.PercentOutput, -power * .7);
+    rightMotor.set(ControlMode.PercentOutput, power * .7);
   }
 
   public Climber() {

@@ -57,8 +57,8 @@ public final class Constants {
   public static final class ClimberIDsAndPorts {
     public static final int CLIMBER_LEFT_MOTOR = 55;
     public static final int CLIMBER_RIGHT_MOTOR = 56;
-    public static final int LATCH_RIGHT_SERVO = 5;
-    public static final int LATCH_LEFT_SERVO = 6;
+    public static final int LATCH_RIGHT_SERVO = 6;
+    public static final int LATCH_LEFT_SERVO = 5;
   }
 
   public static class AprilTagIDs {

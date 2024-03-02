@@ -19,6 +19,7 @@ import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LEDs;
 import frc.robot.subsystems.NoteCamera;
 import frc.robot.subsystems.Shooter;
 
@@ -57,6 +58,7 @@ public class RobotContainer {
   private final Shooter shooter = new Shooter();
   private final Aimer aimer = new Aimer();
   private final Climber climber = new Climber();
+  private final LEDs leds = new LEDs();
   //private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
   private final NoteCamera noteCamera = new NoteCamera();
   private final CommandXboxController driveController =
@@ -199,5 +201,14 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return m_chooser.getSelected();
+  }
+
+  public void setAllianceLEDs() {
+    if (DriverStation.getAlliance().get() == Alliance.Blue) {
+      leds.setColor(LEDs.Color.blue);
+    }
+    if (DriverStation.getAlliance().get() == Alliance.Red) {
+      leds.setColor(LEDs.Color.red);
+    }
   }
 }
