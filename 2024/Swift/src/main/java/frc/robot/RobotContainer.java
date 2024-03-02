@@ -109,8 +109,8 @@ public class RobotContainer {
       .andThen(getMobilityCommand(1.5, 70)));
     m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new Shoot(intake, shooter)
       .andThen(new DriveToNote(drivetrain, noteCamera, intake))
-      .andThen(new TimedIntake(intake, .25))
-     .andThen(getMobilityCommand(1.5, -50))
+      .andThen(new TimedIntake(intake, .05))
+      .andThen(getMobilityCommand(1.85, -70))
       .andThen(new Shoot(intake, shooter)));
     SmartDashboard.putData(m_chooser);
 

@@ -11,7 +11,7 @@ import frc.robot.subsystems.Intake;
 public class TimedIntake extends Command {
   private final Intake intake;
   private final Timer timer = new Timer();
-  double time = .25;
+  double time = .05;
   /** Creates a new TimedIntake. */
   public TimedIntake(Intake intake, double time){
     addRequirements(intake);
