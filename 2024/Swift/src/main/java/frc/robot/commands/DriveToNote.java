@@ -18,14 +18,12 @@ public class DriveToNote extends Command {
   private final NoteCamera noteCamera;
   private final Intake intake;
 
-  PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
-  PIDController speedPID = new PIDController(0.13, 0.5, 0.013);
-
   private final Timer timer = new Timer();
 
+  private PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
+  private PIDController speedPID = new PIDController(0.13, 0.5, 0.013);
 
   public DriveToNote(Drivetrain drive, NoteCamera noteCamera, Intake intake){
-    addRequirements(drive, noteCamera, intake);
     this.drive = drive;
     this.noteCamera = noteCamera;
     this.intake = intake;
@@ -34,8 +32,9 @@ public class DriveToNote extends Command {
     turnPID.setIntegratorRange(-15, 15);
     turnPID.setIntegratorRange(-15, 15);
     timer.start();
-  }
 
+    addRequirements(drive, noteCamera, intake);
+  }
 
   // Called when the command is initially scheduled.
   @Override
@@ -61,12 +60,7 @@ public class DriveToNote extends Command {
       speedOutput = speedPID.calculate(noteCamera.lastNoteY, 0);
       SmartDashboard.putNumber("Turn Output", turnOutput);
       SmartDashboard.putNumber("Speed Output", speedOutput);
-      drive.drive(
-          new ChassisSpeeds(
-              speedOutput,
-              0,
-              turnOutput
-        ));
+      drive.drive(new ChassisSpeeds(speedOutput, 0, turnOutput));
     }
     else {
       if (hasTarget) {

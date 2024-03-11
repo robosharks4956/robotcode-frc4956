@@ -10,15 +10,17 @@ import frc.robot.subsystems.Intake;
 
 public class TimedIntake extends Command {
   private final Intake intake;
+
   private final Timer timer = new Timer();
-  double time = .05;
+  private final double time;
+
   /** Creates a new TimedIntake. */
   public TimedIntake(Intake intake, double time){
-    addRequirements(intake);
     this.intake = intake;
     this.time = time;
+
+    addRequirements(intake);
   }
-    // Use addRequirements() here to declare subsystem dependencies.
 
   // Called when the command is initially scheduled.
   @Override
@@ -29,12 +31,7 @@ public class TimedIntake extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-     if (timer.get()<time){
-      intake.setVelocity(1);
-    }
-    else{
-      intake.setVelocity(0);
-    }
+    intake.setVelocity(timer.get() < time ? 1 : 0);
   }
 
   // Called once the command ends or is interrupted.
@@ -44,6 +41,6 @@ public class TimedIntake extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return timer.get()>time;
+    return timer.get() > time;
   }
 }

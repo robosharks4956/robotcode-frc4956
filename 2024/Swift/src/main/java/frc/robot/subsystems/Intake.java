@@ -56,6 +56,8 @@ public class Intake extends SubsystemBase {
 
   public void setVelocity(double velocity) {
     motor.set(velocity);
+    SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
+
     // Set max output to 0 when velocity is 0, to fix oscillation at 0
     /*if (velocity == 0) {
       m_pidController.setOutputRange(0,0);

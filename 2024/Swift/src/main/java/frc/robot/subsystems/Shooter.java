@@ -25,8 +25,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public void set(double power) {
+
     motor.set(power);
     cornerMotor.set(power);
+    SmartDashboard.putNumber("Shooter Power", power);
     SmartDashboard.putNumber("Shooter Velocity", motor.getEncoder().getVelocity());
   }
 }

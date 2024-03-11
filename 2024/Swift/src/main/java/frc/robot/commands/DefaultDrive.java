@@ -40,6 +40,7 @@ public class DefaultDrive extends Command {
     // Added extra multiplier to slow rotation because with lag it would
     // rotate a little bit too long at high speed and throw off the driver
     double rotatespeedmultiplier = speedmultiplier * 0.5;
+    // TODO: Do we need this?
 
     if (fieldrelativeSupplier.getAsBoolean()) {
       // Field-relative drive

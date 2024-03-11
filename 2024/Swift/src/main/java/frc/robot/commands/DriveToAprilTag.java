@@ -17,10 +17,10 @@ public class DriveToAprilTag extends Command {
   private final AprilTagCamera aprilTagCamera;
   private final int id;
 
-  PIDController turnPID = new PIDController(5, 0.4, 0.2);
-  PIDController speedPID = new PIDController(40, 10, 0.013);
-
   private final Timer timer = new Timer();
+
+  private PIDController turnPID = new PIDController(5, 0.4, 0.2);
+  private PIDController speedPID = new PIDController(40, 10, 0.013);
 
   public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera, int id) {
     addRequirements(drive, aprilTagCamera);

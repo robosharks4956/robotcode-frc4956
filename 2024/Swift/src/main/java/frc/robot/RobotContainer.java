@@ -11,6 +11,7 @@ import frc.robot.commands.DefaultIntake;
 import frc.robot.commands.DefaultShoot;
 import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
+import frc.robot.commands.MobilityCommand;
 import frc.robot.commands.Shoot;
 import frc.robot.commands.TimedIntake;
 import frc.robot.commands.VibrateController;
@@ -28,7 +29,6 @@ import static frc.robot.Constants.*;
 import java.util.Map;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -40,8 +40,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -66,17 +64,22 @@ public class RobotContainer {
   private final CommandXboxController supportController =
     new CommandXboxController(SUPPORT_CONTROLLER_PORT);
   private ShuffleboardTab driveTab = Shuffleboard.getTab("Drive");
-  
+
   private GenericEntry maxspeed = driveTab
     .add("Max Speed", 1)
     .withWidget(BuiltInWidgets.kNumberSlider)
-    .withProperties(Map.of("min", 0, "max", 1))
+    .withProperties(Map.of("min", 0, "max", 2))
     .getEntry();
   private GenericEntry fieldrelative2 = driveTab
     .add("Field Relative", true)
     .withWidget(BuiltInWidgets.kToggleSwitch)
     .getEntry();
   private ShuffleboardTab supportTab = Shuffleboard.getTab("Support");
+  private GenericEntry delay = driveTab
+    .add("Delay", 0)
+    .withWidget(BuiltInWidgets.kNumberSlider)
+    .withProperties(Map.of("min", 0, "max", 5))
+    .getEntry();
 
   SendableChooser<Command> m_chooser = new SendableChooser<>();
 
@@ -102,16 +105,28 @@ public class RobotContainer {
     putDriveControls(); 
 
     m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
-    m_chooser.addOption("#2 Leave", getMobilityCommand(1.5, 70));
-    m_chooser.addOption("#3 Shoot, Drive to Note", new Shoot(intake, shooter)
+    m_chooser.addOption("#2 Leave", new MobilityCommand(drivetrain, 1.5, 70, 0));
+    m_chooser.addOption("#3 Shoot, Drive to Note", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
+      new Shoot(intake, shooter, 1)
       .andThen(new DriveToNote(drivetrain, noteCamera, intake)));
-    m_chooser.addOption("#4 Shoot and Leave", new Shoot(intake, shooter)
-      .andThen(getMobilityCommand(1.5, 70)));
-    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new Shoot(intake, shooter)
+    m_chooser.addOption("#4 Shoot and Leave", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
+      (new Shoot(intake, shooter,1))
+      .andThen(new MobilityCommand(drivetrain, 1.5, 70, 0)));
+    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
+      new Shoot(intake, shooter, 1)
       .andThen(new DriveToNote(drivetrain, noteCamera, intake))
       .andThen(new TimedIntake(intake, .05))
-      .andThen(getMobilityCommand(1.85, -70))
-      .andThen(new Shoot(intake, shooter)));
+      .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
+      .andThen(new MobilityCommand(drivetrain, 2.85, -70, 0))
+      .andThen(new Shoot(intake, shooter, 1)));
+    m_chooser.addOption("#6 Amp", new MobilityCommand(drivetrain, 1, 0, -30)
+      .andThen(new Shoot(intake, shooter, .35))
+      .andThen(new WaitCommand(0.5)
+      .andThen(new MobilityCommand(drivetrain, 5, 0, -30)))); 
+    m_chooser.addOption("#7 Shoot and Leave Diagonal Left", new Shoot(intake, shooter, 1)
+      .andThen(new MobilityCommand(drivetrain, 1.5, 70, 70)));
+    m_chooser.addOption("#8 Shoot and Leave Diagonal Right", new Shoot(intake, shooter, 1)
+      .andThen(new MobilityCommand(drivetrain, 1.5, 70, -70)));
     SmartDashboard.putData(m_chooser);
 
     configureBindings();
@@ -129,7 +144,7 @@ public class RobotContainer {
   private void configureBindings() {
     // Run shoot command on Y button
     final Trigger supportYButton = supportController.y();
-    supportYButton.whileTrue(new Shoot(intake, shooter));
+    supportYButton.whileTrue(new Shoot(intake, shooter, 1));
 
     // Open climber latch servos on support controller A button press
     final Trigger supportAButton = supportController.a();
@@ -163,17 +178,6 @@ public class RobotContainer {
     final Trigger foundTargetTrigger = new Trigger(() -> noteCamera.hasTarget);
     foundTargetTrigger.whileTrue(
       new VibrateController(0.1, 0.5, driveController, supportController).andThen(new WaitCommand(0.15)).repeatedly());
-  }
-
-  private Command getMobilityCommand(double timeout, double speed) {
-    return new RunCommand(() -> {
-      drivetrain.drive(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-          -speed,
-            0,
-            0,
-            drivetrain.getGyroscopeRotation()));
-    }, drivetrain).repeatedly().withTimeout(timeout);
   }
 
   private void putDriveControls() {

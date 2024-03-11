@@ -12,10 +12,13 @@ import frc.robot.subsystems.Shooter;
 public class Shoot extends Command {
   private final Intake intake;
   private final Shooter shooter;
+  private final double power;
 
-  public Shoot(Intake intake, Shooter shooter) {
+  public Shoot(Intake intake, Shooter shooter, double power) {
     this.intake = intake;
     this.shooter = shooter;
+    this.power = power;
+
     addRequirements(intake, shooter);
   }
 
@@ -25,7 +28,7 @@ public class Shoot extends Command {
   @Override
   public void initialize() {
     timer.restart();
-    shooter.set(1);
+    shooter.set(power);
   }
 
   private final double spinTime = .5;

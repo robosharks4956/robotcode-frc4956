@@ -41,17 +41,11 @@ public class DistanceDrive extends Command {
   public void end(boolean interrupted) {}
 
   public boolean isXDistanceReached() {
-    if (drive.getPoseX() - startingXDistance > targetXDistance) {
-      return true;
-    }
-    return false;
+    return drive.getPoseX() - startingXDistance > targetXDistance;
   }
 
   public boolean isYDistanceReached() {
-    if (drive.getPoseY() - startingYDistance > targetYDistance) {
-      return true;
-    }
-    return false;
+    return drive.getPoseY() - startingYDistance > targetYDistance;
   }
   
   // Returns true when the command should end.
