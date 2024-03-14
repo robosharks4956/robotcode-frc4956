@@ -12,11 +12,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import static frc.robot.Constants.NoteMechanismIDs.*;
 
 public class Shooter extends SubsystemBase { 
-  private final CANSparkMax motor = new CANSparkMax(SHOOTING_MOTOR, MotorType.kBrushless);
-  private final CANSparkMax cornerMotor = new CANSparkMax(SHOOTER_CORNER_MOTOR, MotorType.kBrushless);
+  private final CANSparkMax leftMotor = new CANSparkMax(SHOOTING_MOTOR, MotorType.kBrushless);
+  private final CANSparkMax rightMotor = new CANSparkMax(SHOOTER_CORNER_MOTOR, MotorType.kBrushless);
 
   public Shooter() {
-    motor.setInverted(true);
+    leftMotor.setInverted(true);
   }
 
   @Override
@@ -26,9 +26,9 @@ public class Shooter extends SubsystemBase {
 
   public void set(double power) {
 
-    motor.set(power);
-    cornerMotor.set(power);
+    leftMotor.set(power);
+    rightMotor.set(power * 0.95);
     SmartDashboard.putNumber("Shooter Power", power);
-    SmartDashboard.putNumber("Shooter Velocity", motor.getEncoder().getVelocity());
+    SmartDashboard.putNumber("Shooter Velocity", leftMotor.getEncoder().getVelocity());
   }
 }

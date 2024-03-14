@@ -29,7 +29,7 @@ public class DefaultShoot extends Command {
   @Override
   public void execute() {
     if (supportController.getHID().getXButton()) {
-      shooter.set(.25);
+      shooter.set(0.325);
     }
     else {
       double leftTrigger = MathUtil.applyDeadband(supportController.getLeftTriggerAxis(), 0.05);
@@ -37,6 +37,7 @@ public class DefaultShoot extends Command {
       shooter.set((rightTrigger - leftTrigger) * 2);
     }
   }
+  //shooter runs at 5500 rpm
 
   // Called once the command ends or is interrupted.
   @Override

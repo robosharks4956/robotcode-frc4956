@@ -4,14 +4,14 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.Servo;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+//import edu.wpi.first.math.MathUtil;
+//import edu.wpi.first.wpilibj.Servo;
+//import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import static frc.robot.Constants.NoteMechanismIDs.*;
+//import static frc.robot.Constants.NoteMechanismIDs.*;
 
 public class Aimer extends SubsystemBase {
-  private final double minPosition = 0.125;
+  //private final double minPosition = 0.125;
   private final double maxPosition = 0.400;
 
   double position = maxPosition;

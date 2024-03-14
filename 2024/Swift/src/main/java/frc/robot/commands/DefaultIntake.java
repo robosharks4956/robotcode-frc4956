@@ -31,6 +31,9 @@ public class DefaultIntake extends Command {
     }
     else if(supportController.getHID().getRightBumper()){
       intake.setVelocity(-1);
+      //if (intake.getColorSensor() == true && !(supportController.getRightTriggerAxis() > 0.05)) {
+    //    intake.setVelocity(0);
+    //  }
     }
     else {
       intake.setVelocity(0);

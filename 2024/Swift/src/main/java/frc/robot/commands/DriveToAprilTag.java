@@ -6,38 +6,61 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Drivetrain;
+import static frc.robot.Constants.AprilTagIDs.*;
 
 public class DriveToAprilTag extends Command {
   private final Drivetrain drive;
   private final AprilTagCamera aprilTagCamera;
-  private final int id;
+  private final boolean toSpeaker;
+  private final double distanceBuffer;
 
   private final Timer timer = new Timer();
 
   private PIDController turnPID = new PIDController(5, 0.4, 0.2);
   private PIDController speedPID = new PIDController(40, 10, 0.013);
 
-  public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera, int id) {
-    addRequirements(drive, aprilTagCamera);
+
+
+  private int id;
+
+  public DriveToAprilTag(Drivetrain drive, AprilTagCamera aprilTagCamera, boolean toSpeaker, double distanceBuffer) {
     this.drive = drive;
     this.aprilTagCamera = aprilTagCamera;
-    this.id = id;
+    this.toSpeaker = toSpeaker;
+    this.distanceBuffer = distanceBuffer;
+
     SmartDashboard.putData("Tag Turn PID", turnPID);
     SmartDashboard.putData("Tag Speed PID", speedPID);
     turnPID.setIntegratorRange(-15, 15);
     speedPID.setIntegratorRange(-100, 100);
-    timer.start();
-  }
 
+    addRequirements(drive, aprilTagCamera);
+  }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+    timer.restart();
+
+    switch (DriverStation.getAlliance().get()) {
+      case Blue:
+        this.id = toSpeaker ? BLUE_SPEAKER : BLUE_AMP;
+        break;
+      
+      case Red:
+        this.id = toSpeaker ? RED_SPEAKER : RED_AMP;
+        break;
+    
+      default:
+        break;
+    }
+  }
 
   private double turnOutput = 0;
   private double speedOutput = 0;
@@ -54,16 +77,16 @@ public class DriveToAprilTag extends Command {
         speedPID.reset();
         System.out.println("Tag Seen " + timer.get());
       }
-      turnOutput = turnPID.calculate(aprilTagCamera.getYaw(id)*-1, 0);
-      speedOutput = speedPID.calculate(aprilTagCamera.getDistance(id), 2);
-      if (Math.abs(aprilTagCamera.getDistance(id)-2) < .1){
+      turnOutput = turnPID.calculate(aprilTagCamera.getYaw(id) * -1, 0);
+      speedOutput = speedPID.calculate(aprilTagCamera.getDistance(id), .25);
+      if (Math.abs(aprilTagCamera.getDistance(id) - 2) < distanceBuffer){
         targetInRange = true;
       }
       SmartDashboard.putNumber("Turn Output", turnOutput);
       SmartDashboard.putNumber("Speed Output", speedOutput);
       drive.drive(
           new ChassisSpeeds(
-              speedOutput,
+              -speedOutput,
               0,
               turnOutput
         ));

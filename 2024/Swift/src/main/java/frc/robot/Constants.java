@@ -64,6 +64,8 @@ public final class Constants {
   public static class AprilTagIDs {
     public static final int BLUE_SPEAKER = 7; // Or maybe 8
     public static final int RED_SPEAKER = 3; // Or maybe 4
+    public static final int BLUE_AMP = 6;
+    public static final int RED_AMP = 5;
   }
 
   public static final int LED_PORT = 8;

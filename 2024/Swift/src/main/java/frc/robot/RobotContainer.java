@@ -57,7 +57,7 @@ public class RobotContainer {
   private final Aimer aimer = new Aimer();
   private final Climber climber = new Climber();
   private final LEDs leds = new LEDs();
-  //private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
+  private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
   private final NoteCamera noteCamera = new NoteCamera();
   private final CommandXboxController driveController =
     new CommandXboxController(DRIVE_CONTROLLER_PORT);
@@ -117,16 +117,19 @@ public class RobotContainer {
       .andThen(new DriveToNote(drivetrain, noteCamera, intake))
       .andThen(new TimedIntake(intake, .05))
       .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
-      .andThen(new MobilityCommand(drivetrain, 2.85, -70, 0))
+      .andThen(new MobilityCommand(drivetrain, 3.1, -70, 0))
       .andThen(new Shoot(intake, shooter, 1)));
-    m_chooser.addOption("#6 Amp", new MobilityCommand(drivetrain, 1, 0, -30)
-      .andThen(new Shoot(intake, shooter, .35))
+    m_chooser.addOption("#6 Amp", new MobilityCommand(drivetrain, 0.75, 0, -30)
+      .andThen(new Shoot(intake, shooter, 0.275))
       .andThen(new WaitCommand(0.5)
       .andThen(new MobilityCommand(drivetrain, 5, 0, -30)))); 
-    m_chooser.addOption("#7 Shoot and Leave Diagonal Left", new Shoot(intake, shooter, 1)
+    m_chooser.addOption("#7 Shoot and Leave Diagonal Amp", new Shoot(intake, shooter, 1)
       .andThen(new MobilityCommand(drivetrain, 1.5, 70, 70)));
-    m_chooser.addOption("#8 Shoot and Leave Diagonal Right", new Shoot(intake, shooter, 1)
-      .andThen(new MobilityCommand(drivetrain, 1.5, 70, -70)));
+    m_chooser.addOption("#8 Shoot and Leave Diagonal Source", new Shoot(intake, shooter, 1)
+      .andThen(new MobilityCommand(drivetrain, 2.5, 70, 0)));
+    m_chooser.addOption("#9 Drive to Speaker", new DriveToAprilTag(drivetrain, aprilTagCamera, true, 0.1));
+    m_chooser.addOption("#10 Drive to Amp", new DriveToAprilTag(drivetrain, aprilTagCamera, false, 0.1));
+
     SmartDashboard.putData(m_chooser);
 
     configureBindings();
@@ -157,16 +160,6 @@ public class RobotContainer {
     // Reset gyro on driver back button press
     final Trigger driverBackButton = driveController.back();
     driverBackButton.onTrue(new InstantCommand(()->drivetrain.zeroGyroscope()));
-
-    /*final Trigger driverXButton = driveController.x();
-    driverXButton.onTrue(new InstantCommand(() -> {
-      if (DriverStation.getAlliance().get() == Alliance.Blue) {
-        new DriveToAprilTag(drivetrain, aprilTagCamera, AprilTagIDs.BLUE_SPEAKER).schedule();
-      }
-      if (DriverStation.getAlliance().get() == Alliance.Red) {
-        new DriveToAprilTag(drivetrain, aprilTagCamera, AprilTagIDs.RED_SPEAKER).schedule();
-      }
-    }));*/
 
     final Trigger driverYButton = driveController.y();
     driverYButton.whileTrue(new DriveToNote(drivetrain, noteCamera, intake));
@@ -208,11 +201,13 @@ public class RobotContainer {
   }
 
   public void setAllianceLEDs() {
-    if (DriverStation.getAlliance().get() == Alliance.Blue) {
+    if (DriverStation.getAlliance().isPresent()){
+      if (DriverStation.getAlliance().get() == Alliance.Blue) {
       leds.setColor(LEDs.Color.blue);
     }
-    if (DriverStation.getAlliance().get() == Alliance.Red) {
+     if (DriverStation.getAlliance().get() == Alliance.Red) {
       leds.setColor(LEDs.Color.red);
     }
+   }
   }
 }

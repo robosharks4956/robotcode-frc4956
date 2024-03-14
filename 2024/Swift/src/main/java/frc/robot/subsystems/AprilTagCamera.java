@@ -16,7 +16,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class AprilTagCamera extends SubsystemBase {
   /** Creates a new Vision. */
-private PhotonCamera cam = new PhotonCamera("Main_Camera");
+private PhotonCamera cam = new PhotonCamera("AprilTag_Camera");
  public static final Transform3d kRobotToCam =
      new Transform3d(new Translation3d(0.0254, 0.0381, 0.6985), new Rotation3d(0, 0, 0));
      public static final Transform3d kCameraToRobot =
