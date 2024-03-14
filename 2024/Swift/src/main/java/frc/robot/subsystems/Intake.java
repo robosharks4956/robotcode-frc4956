@@ -5,8 +5,8 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
+// import com.revrobotics.RelativeEncoder;
+// import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -18,29 +18,29 @@ public class Intake extends SubsystemBase {
   private final DigitalInput colorSensor = new DigitalInput(COLOR_SENSOR);
   private final CANSparkMax motor = new CANSparkMax(INTAKE_MOTOR, MotorType.kBrushless);
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM;
-  private SparkPIDController m_pidController;
-  private RelativeEncoder m_encoder;
+  // private SparkPIDController m_pidController;
+  // private RelativeEncoder m_encoder;
 
   /** Creates a new Intake. */
   public Intake() {
-    m_pidController = motor.getPIDController();
-    m_encoder = motor.getEncoder();
-    kP = 0.0035; 
-    kI = 0;
-    kD = 0.0244; 
-    kIz = 0; 
-    kFF = 0; 
-    kMaxOutput = 1; 
-    kMinOutput = -1;
-    maxRPM = 3500;
+    // m_pidController = motor.getPIDController();
+    // m_encoder = motor.getEncoder();
+    // kP = 0.0035; 
+    // kI = 0;
+    // kD = 0.0244; 
+    // kIz = 0; 
+    // kFF = 0; 
+    // kMaxOutput = 1; 
+    // kMinOutput = -1;
+    // maxRPM = 3500;
 
-    // set PID coefficients
-    m_pidController.setP(kP);
-    m_pidController.setI(kI);
-    m_pidController.setD(kD);
-    m_pidController.setIZone(kIz);
-    m_pidController.setFF(kFF);
-    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
+    // // set PID coefficients
+    // m_pidController.setP(kP);
+    // m_pidController.setI(kI);
+    // m_pidController.setD(kD);
+    // m_pidController.setIZone(kIz);
+    // m_pidController.setFF(kFF);
+    // m_pidController.setOutputRange(kMinOutput, kMaxOutput);
 
     SmartDashboard.putData(colorSensor);
   }
@@ -56,7 +56,7 @@ public class Intake extends SubsystemBase {
 
   public void setVelocity(double velocity) {
     motor.set(velocity);
-    SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
+    // SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
 
     // Set max output to 0 when velocity is 0, to fix oscillation at 0
     /*if (velocity == 0) {

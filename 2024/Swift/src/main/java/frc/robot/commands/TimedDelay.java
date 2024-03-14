@@ -6,30 +6,27 @@ package frc.robot.commands;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Aimer;
 
-public class DefaultAim extends Command {
-  private final Aimer aimer;
-  private final DoubleSupplier movementSupplier;
-
-  /** Creates a new DefaultAim. */
-  public DefaultAim(Aimer aimer, DoubleSupplier movementSupplier) {
-    this.aimer = aimer;
-    this.movementSupplier = movementSupplier;
-    
-    addRequirements(aimer);
+public class TimedDelay extends Command {
+  DoubleSupplier delay;
+  Timer timer = new Timer();
+  /** Creates a new TimedDelay. */
+  public TimedDelay(DoubleSupplier delay) {
+    this.delay = delay;
+    // Use addRequirements() here to declare subsystem dependencies.
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+    timer.restart();
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {
-    aimer.move(movementSupplier.getAsDouble());
-  }
+  public void execute() {}
 
   // Called once the command ends or is interrupted.
   @Override
@@ -38,6 +35,6 @@ public class DefaultAim extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return timer.hasElapsed(delay.getAsDouble());
   }
 }

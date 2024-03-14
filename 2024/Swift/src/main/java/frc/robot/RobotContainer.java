@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import frc.robot.commands.DefaultAim;
+import frc.robot.commands.AmpShoot;
 import frc.robot.commands.DefaultClimb;
 import frc.robot.commands.DefaultDrive;
 import frc.robot.commands.DefaultIntake;
@@ -13,9 +13,10 @@ import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
 import frc.robot.commands.MobilityCommand;
 import frc.robot.commands.Shoot;
+import frc.robot.commands.TimedDelay;
 import frc.robot.commands.TimedIntake;
+import frc.robot.commands.TurnToAngle;
 import frc.robot.commands.VibrateController;
-import frc.robot.subsystems.Aimer;
 import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
@@ -54,7 +55,6 @@ public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
   private final Intake intake = new Intake();
   private final Shooter shooter = new Shooter();
-  private final Aimer aimer = new Aimer();
   private final Climber climber = new Climber();
   private final LEDs leds = new LEDs();
   private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
@@ -88,7 +88,6 @@ public class RobotContainer {
     intake.setDefaultCommand(
       new DefaultIntake(supportController, intake));
     shooter.setDefaultCommand(new DefaultShoot(shooter, supportController));
-    aimer.setDefaultCommand(new DefaultAim(aimer, () -> modifyAxis(supportController.getRightY(), 0.05, 2)));
     climber.setDefaultCommand(new DefaultClimb(climber, supportController));
     drivetrain.setDefaultCommand(new DefaultDrive(
       drivetrain,
@@ -106,14 +105,14 @@ public class RobotContainer {
 
     m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
     m_chooser.addOption("#2 Leave", new MobilityCommand(drivetrain, 1.5, 70, 0));
-    m_chooser.addOption("#3 Shoot, Drive to Note", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
-      new Shoot(intake, shooter, 1)
+    m_chooser.addOption("#3 Shoot, Drive to Note", new TimedDelay(() -> delay.getDouble(0))
+      .andThen (new Shoot(intake, shooter, 1))
       .andThen(new DriveToNote(drivetrain, noteCamera, intake)));
-    m_chooser.addOption("#4 Shoot and Leave", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
-      (new Shoot(intake, shooter,1))
+    m_chooser.addOption("#4 Shoot and Leave", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter,1))
       .andThen(new MobilityCommand(drivetrain, 1.5, 70, 0)));
-    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", //new MobilityCommand(drivetrain, delay.getDouble(1), 0, 0)
-      new Shoot(intake, shooter, 1)
+    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter, 1))
       .andThen(new DriveToNote(drivetrain, noteCamera, intake))
       .andThen(new TimedIntake(intake, .05))
       .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
@@ -123,12 +122,16 @@ public class RobotContainer {
       .andThen(new Shoot(intake, shooter, 0.275))
       .andThen(new WaitCommand(0.5)
       .andThen(new MobilityCommand(drivetrain, 5, 0, -30)))); 
-    m_chooser.addOption("#7 Shoot and Leave Diagonal Amp", new Shoot(intake, shooter, 1)
+    m_chooser.addOption("#7 Shoot and Leave Diagonal Amp", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter, 1))
       .andThen(new MobilityCommand(drivetrain, 1.5, 70, 70)));
-    m_chooser.addOption("#8 Shoot and Leave Diagonal Source", new Shoot(intake, shooter, 1)
+    m_chooser.addOption("#8 Shoot and Leave Diagonal Source", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter, 1))
       .andThen(new MobilityCommand(drivetrain, 2.5, 70, 0)));
     m_chooser.addOption("#9 Drive to Speaker", new DriveToAprilTag(drivetrain, aprilTagCamera, true, 0.1));
     m_chooser.addOption("#10 Drive to Amp", new DriveToAprilTag(drivetrain, aprilTagCamera, false, 0.1));
+    m_chooser.addOption("#11 Turn 90 Degrees", new TurnToAngle(drivetrain, 90));
+    
 
     SmartDashboard.putData(m_chooser);
 
@@ -149,13 +152,8 @@ public class RobotContainer {
     final Trigger supportYButton = supportController.y();
     supportYButton.whileTrue(new Shoot(intake, shooter, 1));
 
-    // Open climber latch servos on support controller A button press
-    final Trigger supportAButton = supportController.a();
-    supportAButton.onTrue(new InstantCommand(()-> {climber.setLatch(true);}, climber));
-
-    // Close climber latch servos on support controller B button press
     final Trigger supportBButton = supportController.b();
-    supportBButton.onTrue(new InstantCommand(()-> {climber.setLatch(false);}, climber));
+    supportBButton.whileTrue(new AmpShoot(shooter));
 
     // Reset gyro on driver back button press
     final Trigger driverBackButton = driveController.back();

@@ -11,7 +11,7 @@ import frc.robot.subsystems.Drivetrain;
  */
 public class TurnToAngle extends Command {
 
-  PIDController turnPID = new PIDController(0.22, 0.1, 0.011);
+  PIDController turnPID = new PIDController(10, 0.1, 2);
 
   Drivetrain drivetrain;
   double targetAngle;
@@ -41,7 +41,7 @@ public class TurnToAngle extends Command {
           new ChassisSpeeds(
               0,
               0,
-              turnOutput
+              -turnOutput
         ));
   }
 

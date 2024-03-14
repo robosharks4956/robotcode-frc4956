@@ -28,7 +28,9 @@ public class Shooter extends SubsystemBase {
 
     leftMotor.set(power);
     rightMotor.set(power * 0.95);
-    SmartDashboard.putNumber("Shooter Power", power);
     SmartDashboard.putNumber("Shooter Velocity", leftMotor.getEncoder().getVelocity());
+  }
+  public double getRPM() {
+    return leftMotor.getEncoder().getVelocity();
   }
 }
