@@ -178,6 +178,10 @@ public class Drivetrain extends SubsystemBase {
    return Rotation2d.fromDegrees(-gyro.getAngle());
   }
 
+  public double getGyroAngle() {
+    return -gyro.getAngle();
+  }
+
   /**
    * Get current position of each of the swerve modules in
    * front left, front right, back left, back right order.
