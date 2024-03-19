@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import frc.robot.commands.AmpShoot;
 import frc.robot.commands.DefaultClimb;
 import frc.robot.commands.DefaultDrive;
 import frc.robot.commands.DefaultIntake;
@@ -38,7 +37,6 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -74,9 +72,8 @@ public class RobotContainer {
     .add("Field Relative", true)
     .withWidget(BuiltInWidgets.kToggleSwitch)
     .getEntry();
-  private ShuffleboardTab supportTab = Shuffleboard.getTab("Support");
   private GenericEntry delay = driveTab
-    .add("Delay", 0)
+    .add("Autonomous Delay", 0)
     .withWidget(BuiltInWidgets.kNumberSlider)
     .withProperties(Map.of("min", 0, "max", 5))
     .getEntry();
@@ -118,10 +115,14 @@ public class RobotContainer {
       .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
       .andThen(new MobilityCommand(drivetrain, 3.1, -70, 0))
       .andThen(new Shoot(intake, shooter, 1)));
-    m_chooser.addOption("#6 Amp", new MobilityCommand(drivetrain, 0.75, 0, -30)
+    m_chooser.addOption("#6 Amp (Blue)", new MobilityCommand(drivetrain, 0.75, 0, -30)
       .andThen(new Shoot(intake, shooter, 0.275))
       .andThen(new WaitCommand(0.5)
-      .andThen(new MobilityCommand(drivetrain, 5, 0, -30)))); 
+      .andThen(new MobilityCommand(drivetrain, 5, 0, -30))));
+    m_chooser.addOption("#6 Amp (Red)", new MobilityCommand(drivetrain, 0.75, 0, 30)
+      .andThen(new Shoot(intake, shooter, 0.275))
+      .andThen(new WaitCommand(0.5)
+      .andThen(new MobilityCommand(drivetrain, 5, 0, 30))));
     m_chooser.addOption("#7 Shoot and Leave Diagonal Amp", new TimedDelay(() -> delay.getDouble(0))
       .andThen(new Shoot(intake, shooter, 1))
       .andThen(new MobilityCommand(drivetrain, 1.5, 70, 70)));
@@ -132,8 +133,9 @@ public class RobotContainer {
     m_chooser.addOption("#10 Drive to Amp", new DriveToAprilTag(drivetrain, aprilTagCamera, false, 0.1));
     m_chooser.addOption("#11 Turn 90 Degrees", new TurnToAngle(drivetrain, 90));
     
+    
 
-    SmartDashboard.putData(m_chooser);
+    driveTab.add("Autonomous", m_chooser);
 
     configureBindings();
   }
@@ -152,8 +154,8 @@ public class RobotContainer {
     final Trigger supportYButton = supportController.y();
     supportYButton.whileTrue(new Shoot(intake, shooter, 1));
 
-    final Trigger supportBButton = supportController.b();
-    supportBButton.whileTrue(new AmpShoot(shooter));
+    //final Trigger supportBButton = supportController.b();
+    //supportBButton.whileTrue(new AmpShoot(shooter));
 
     // Reset gyro on driver back button press
     final Trigger driverBackButton = driveController.back();

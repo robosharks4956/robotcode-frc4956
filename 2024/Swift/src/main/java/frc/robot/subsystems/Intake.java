@@ -5,6 +5,8 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkBase.IdleMode;
 // import com.revrobotics.RelativeEncoder;
 // import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -19,12 +21,13 @@ public class Intake extends SubsystemBase {
   private final CANSparkMax motor = new CANSparkMax(INTAKE_MOTOR, MotorType.kBrushless);
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM;
   // private SparkPIDController m_pidController;
-  // private RelativeEncoder m_encoder;
+   private RelativeEncoder m_encoder;
 
   /** Creates a new Intake. */
   public Intake() {
     // m_pidController = motor.getPIDController();
-    // m_encoder = motor.getEncoder();
+     m_encoder = motor.getEncoder();
+     motor.setIdleMode(IdleMode.kCoast);
     // kP = 0.0035; 
     // kI = 0;
     // kD = 0.0244; 
@@ -42,7 +45,7 @@ public class Intake extends SubsystemBase {
     // m_pidController.setFF(kFF);
     // m_pidController.setOutputRange(kMinOutput, kMaxOutput);
 
-    SmartDashboard.putData(colorSensor);
+    //SmartDashboard.putData(colorSensor);
   }
 
   @Override
@@ -56,7 +59,7 @@ public class Intake extends SubsystemBase {
 
   public void setVelocity(double velocity) {
     motor.set(velocity);
-    // SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
+    SmartDashboard.putNumber("Intake Velocity", m_encoder.getVelocity());
 
     // Set max output to 0 when velocity is 0, to fix oscillation at 0
     /*if (velocity == 0) {

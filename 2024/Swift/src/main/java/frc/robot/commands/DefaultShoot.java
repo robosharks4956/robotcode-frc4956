@@ -28,7 +28,7 @@ public class DefaultShoot extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (supportController.getHID().getXButton()) {
+    if (supportController.getHID().getBButton()) {
       shooter.set(0.325);
     }
     else {

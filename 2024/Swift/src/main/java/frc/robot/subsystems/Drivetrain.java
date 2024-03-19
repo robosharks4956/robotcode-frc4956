@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static frc.robot.Constants.DriveConstants.*;
@@ -75,6 +74,8 @@ public class Drivetrain extends SubsystemBase {
   private final SwerveModule m_backLeftModule;
   private final SwerveModule m_backRightModule;
   public final SwerveDrivePoseEstimator odometry;
+  private ShuffleboardTab driveTab = Shuffleboard.getTab("Drive");
+
 
   // The important thing about how you configure your gyroscope is that rotating
   // the robot counter-clockwise should
@@ -89,7 +90,7 @@ public class Drivetrain extends SubsystemBase {
     // until it wraps back over to zero
     gyro = new AHRS(Port.kMXP);
 
-    SmartDashboard.putData("gyro", gyro);
+    driveTab.add("gyro", gyro);
 
     m_frontLeftModule = new MkSwerveModuleBuilder()
         .withLayout(tab.getLayout("Front Left Module", BuiltInLayouts.kList)

@@ -10,17 +10,20 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Shooter;
 
 public class AmpShoot extends Command {
-  /** Creates a new AmpShoot. */
-  PIDController shootPID = new PIDController(.00035, 0.0004, 0.0004);
-  Shooter shooter;
-  double TargetRPM = 2000;
 
+  PIDController shootPID = new PIDController(.00003, 0.0001, 0.00003);
+  double TargetRPM = 1950;
+  double kF = 0.320 / TargetRPM;
+
+  Shooter shooter;
+  
   public AmpShoot(Shooter shooter) {
-    shootPID.setIntegratorRange(-5, 5);
-    addRequirements(shooter);
+    shootPID.setIntegratorRange(-0.1, 0.1);
+    shootPID.setTolerance(5);
     this.shooter = shooter;
     SmartDashboard.putData("Amp PID", shootPID);
-    // Use addRequirements() here to declare subsystem dependencies.
+
+    addRequirements(shooter);
   }
 
   // Called when the command is initially scheduled.
@@ -30,14 +33,19 @@ public class AmpShoot extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double Output = (shootPID.calculate(shooter.getRPM(), TargetRPM));
-    shooter.set(Output);
-    SmartDashboard.putNumber("Amp PID Output", Output);
+    //shooter.setSetpoint(TargetRPM);
+    //double output = (shootPID.calculate(shooter.getRPM(), TargetRPM));
+    // SmartDashboard.putNumber("Amp PID Output", output);
+    // output = output + (kF * TargetRPM);
+    // shooter.set(output);
+    // SmartDashboard.putNumber("Amp PIDF Output", output);
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    shooter.set(0);
+  }
 
   // Returns true when the command should end.
   @Override
