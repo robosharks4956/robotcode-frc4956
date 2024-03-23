@@ -8,15 +8,12 @@ import frc.robot.commands.DefaultClimb;
 import frc.robot.commands.DefaultDrive;
 import frc.robot.commands.DefaultIntake;
 import frc.robot.commands.DefaultShoot;
-import frc.robot.commands.DriveToAprilTag;
 import frc.robot.commands.DriveToNote;
 import frc.robot.commands.MobilityCommand;
 import frc.robot.commands.Shoot;
 import frc.robot.commands.TimedDelay;
 import frc.robot.commands.TimedIntake;
-import frc.robot.commands.TurnToAngle;
 import frc.robot.commands.VibrateController;
-import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
@@ -55,7 +52,7 @@ public class RobotContainer {
   private final Shooter shooter = new Shooter();
   private final Climber climber = new Climber();
   private final LEDs leds = new LEDs();
-  private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
+ // private final AprilTagCamera aprilTagCamera = new AprilTagCamera();
   private final NoteCamera noteCamera = new NoteCamera();
   private final CommandXboxController driveController =
     new CommandXboxController(DRIVE_CONTROLLER_PORT);
@@ -75,7 +72,7 @@ public class RobotContainer {
   private GenericEntry delay = driveTab
     .add("Autonomous Delay", 0)
     .withWidget(BuiltInWidgets.kNumberSlider)
-    .withProperties(Map.of("min", 0, "max", 5))
+    .withProperties(Map.of("min", 0, "max", 10))
     .getEntry();
 
   SendableChooser<Command> m_chooser = new SendableChooser<>();
@@ -113,7 +110,7 @@ public class RobotContainer {
       .andThen(new DriveToNote(drivetrain, noteCamera, intake))
       .andThen(new TimedIntake(intake, .05))
       .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
-      .andThen(new MobilityCommand(drivetrain, 3.1, -70, 0))
+      .andThen(new MobilityCommand(drivetrain, 3.2, -70, 0))
       .andThen(new Shoot(intake, shooter, 1)));
     m_chooser.addOption("#6 Amp (Blue)", new MobilityCommand(drivetrain, 0.75, 0, -30)
       .andThen(new Shoot(intake, shooter, 0.275))
@@ -123,15 +120,20 @@ public class RobotContainer {
       .andThen(new Shoot(intake, shooter, 0.275))
       .andThen(new WaitCommand(0.5)
       .andThen(new MobilityCommand(drivetrain, 5, 0, 30))));
-    m_chooser.addOption("#7 Shoot and Leave Diagonal Amp", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter, 1))
-      .andThen(new MobilityCommand(drivetrain, 1.5, 70, 70)));
-    m_chooser.addOption("#8 Shoot and Leave Diagonal Source", new TimedDelay(() -> delay.getDouble(0))
+    m_chooser.addOption("#7 Shoot and Leave Diagonal Source Side", new TimedDelay(() -> delay.getDouble(0))
       .andThen(new Shoot(intake, shooter, 1))
       .andThen(new MobilityCommand(drivetrain, 2.5, 70, 0)));
-    m_chooser.addOption("#9 Drive to Speaker", new DriveToAprilTag(drivetrain, aprilTagCamera, true, 0.1));
-    m_chooser.addOption("#10 Drive to Amp", new DriveToAprilTag(drivetrain, aprilTagCamera, false, 0.1));
-    m_chooser.addOption("#11 Turn 90 Degrees", new TurnToAngle(drivetrain, 90));
+    m_chooser.addOption("#8 Shoot and Leave Diagonal Amp Side RED", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter, 1))
+      .andThen(new MobilityCommand(drivetrain, 2.5, 70, -40)));
+    m_chooser.addOption("#9 Shoot and Leave Diagonal Amp Side BLUE", new TimedDelay(() -> delay.getDouble(0))
+      .andThen(new Shoot(intake, shooter, 1))
+      .andThen(new MobilityCommand(drivetrain, 2.5, 70, 40)));
+    m_chooser.addOption("#10 Shoot", new TimedDelay(() -> delay.getDouble(0))
+    .andThen(new Shoot(intake, shooter, 1)));
+    //m_chooser.addOption("#10 Drive to Speaker", new DriveToAprilTag(drivetrain, aprilTagCamera, true, 0.1));
+    //m_chooser.addOption("#11 Drive to Amp", new DriveToAprilTag(drivetrain, aprilTagCamera, false, 0.1));
+    //m_chooser.addOption("#11 Turn 90 Degrees", new TurnToAngle(drivetrain, 90));
     
     
 

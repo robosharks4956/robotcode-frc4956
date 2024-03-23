@@ -66,7 +66,7 @@ public class DriveToNote extends Command {
       if (hasTarget) {
         timer.reset();
       }
-      if (timer.hasElapsed(0.25) || noteCamera.lastNoteY < 30) {
+      if (timer.hasElapsed(0.5) || noteCamera.lastNoteY < 30) {
         drive.stop();
 
       }

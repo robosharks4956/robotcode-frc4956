@@ -29,7 +29,7 @@ public class DefaultShoot extends Command {
   @Override
   public void execute() {
     if (supportController.getHID().getBButton()) {
-      shooter.set(0.325);
+      shooter.set(0.26);
     }
     else {
       double leftTrigger = MathUtil.applyDeadband(supportController.getLeftTriggerAxis(), 0.05);
