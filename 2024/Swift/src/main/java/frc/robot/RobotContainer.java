@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.AbsoluteDriveAdv;
 import frc.robot.commands.DefaultClimb;
 import frc.robot.commands.DefaultDrive;
 import frc.robot.commands.DefaultIntake;
@@ -20,9 +22,11 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LEDs;
 import frc.robot.subsystems.NoteCamera;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.SwerveSubsystem;
 
 import static frc.robot.Constants.*;
 
+import java.io.File;
 import java.util.Map;
 
 import edu.wpi.first.math.MathUtil;
@@ -30,6 +34,8 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -47,7 +53,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-  private final Drivetrain drivetrain = new Drivetrain();
+ // private final Drivetrain drivetrain = new Drivetrain();
   private final Intake intake = new Intake();
   private final Shooter shooter = new Shooter();
   private final Climber climber = new Climber();
@@ -59,6 +65,9 @@ public class RobotContainer {
   private final CommandXboxController supportController =
     new CommandXboxController(SUPPORT_CONTROLLER_PORT);
   private ShuffleboardTab driveTab = Shuffleboard.getTab("Drive");
+
+    private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+                                                                         "swerve"));
 
   private GenericEntry maxspeed = driveTab
     .add("Max Speed", 1)
@@ -79,56 +88,106 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
+
+   // Applies deadbands and inverts controls because joysticks
+    // are back-right positive while robot
+    // controls are front-left positive
+    // left stick controls translation
+    // right stick controls the rotational velocity 
+    // buttons are quick rotation positions to different ways to face
+    // WARNING: default buttons are on the same buttons as the ones defined in configureBindings
+    AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
+                                                                   () -> -MathUtil.applyDeadband(driveController.getLeftY(),
+                                                                                                 OperatorConstants.LEFT_Y_DEADBAND),
+                                                                   () -> -MathUtil.applyDeadband(driveController.getLeftX(),
+                                                                                                 OperatorConstants.LEFT_X_DEADBAND),
+                                                                   () -> -MathUtil.applyDeadband(driveController.getRightX(),
+                                                                                                 OperatorConstants.RIGHT_X_DEADBAND),
+                                                                   driveController.getHID()::getYButtonPressed,
+                                                                   driveController.getHID()::getAButtonPressed,
+                                                                   driveController.getHID()::getXButtonPressed,
+                                                                   driveController.getHID()::getBButtonPressed);
+
+                                                                       // Applies deadbands and inverts controls because joysticks
+    // are back-right positive while robot
+    // controls are front-left positive
+    // left stick controls translation
+    // right stick controls the desired angle NOT angular rotation
+    Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
+        () -> MathUtil.applyDeadband(driveController.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
+        () -> MathUtil.applyDeadband(driveController.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
+        () -> driveController.getRightX(),
+        () -> driveController.getRightY());
+
+    // Applies deadbands and inverts controls because joysticks
+    // are back-right positive while robot
+    // controls are front-left positive
+    // left stick controls translation
+    // right stick controls the angular velocity of the robot
+    Command driveFieldOrientedAnglularVelocity = drivebase.driveCommand(
+        () -> MathUtil.applyDeadband(driveController.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
+        () -> MathUtil.applyDeadband(driveController.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
+        () -> driveController.getRightX() * 0.5);
+
+    Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
+        () -> MathUtil.applyDeadband(driveController.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
+        () -> MathUtil.applyDeadband(driveController.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
+        () -> driveController.getRawAxis(2));
+
+    drivebase.setDefaultCommand(
+        !RobotBase.isSimulation() ? driveFieldOrientedDirectAngle : driveFieldOrientedDirectAngleSim);
+
     intake.setDefaultCommand(
       new DefaultIntake(supportController, intake));
     shooter.setDefaultCommand(new DefaultShoot(shooter, supportController));
     climber.setDefaultCommand(new DefaultClimb(climber, supportController));
-    drivetrain.setDefaultCommand(new DefaultDrive(
-      drivetrain,
-      () -> -modifyAxis((driveController.getLeftY()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
-      () -> -modifyAxis((driveController.getLeftX()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
-      () -> -modifyAxis((driveController.getRightX()), 0.05, 2)
-        * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
-      () -> fieldrelative2.getBoolean(true),
-      () -> maxspeed.getDouble(1)));
+    // drivetrain.setDefaultCommand(new DefaultDrive(
+    //   drivetrain,
+    //   () -> -modifyAxis((driveController.getLeftY()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
+    //   () -> -modifyAxis((driveController.getLeftX()), 0.05, 2) * Drivetrain.MAX_VELOCITY_METERS_PER_SECOND,
+    //   () -> -modifyAxis((driveController.getRightX()), 0.05, 2)
+    //     * Drivetrain.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
+    //   () -> fieldrelative2.getBoolean(true),
+    //   () -> maxspeed.getDouble(1)));
 
     driveTab.addNumber("Voltage", () -> RobotController.getBatteryVoltage())
       .withWidget(BuiltInWidgets.kVoltageView)
       .withProperties(Map.of("min", 0, "max", 13));
-    putDriveControls(); 
+    //putDriveControls(); 
 
     m_chooser.setDefaultOption("#1 Nothing", new InstantCommand());
-    m_chooser.addOption("#2 Leave", new MobilityCommand(drivetrain, 1.5, 70, 0));
-    m_chooser.addOption("#3 Shoot, Drive to Note", new TimedDelay(() -> delay.getDouble(0))
-      .andThen (new Shoot(intake, shooter, 1))
-      .andThen(new DriveToNote(drivetrain, noteCamera, intake)));
-    m_chooser.addOption("#4 Shoot and Leave", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter,1))
-      .andThen(new MobilityCommand(drivetrain, 1.5, 70, 0)));
-    m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter, 1))
-      .andThen(new DriveToNote(drivetrain, noteCamera, intake))
-      .andThen(new TimedIntake(intake, .05))
-      .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
-      .andThen(new MobilityCommand(drivetrain, 3.2, -70, 0))
-      .andThen(new Shoot(intake, shooter, 1)));
-    m_chooser.addOption("#6 Amp (Blue)", new MobilityCommand(drivetrain, 0.75, 0, -30)
-      .andThen(new Shoot(intake, shooter, 0.275))
-      .andThen(new WaitCommand(0.5)
-      .andThen(new MobilityCommand(drivetrain, 5, 0, -30))));
-    m_chooser.addOption("#6 Amp (Red)", new MobilityCommand(drivetrain, 0.75, 0, 30)
-      .andThen(new Shoot(intake, shooter, 0.275))
-      .andThen(new WaitCommand(0.5)
-      .andThen(new MobilityCommand(drivetrain, 5, 0, 30))));
-    m_chooser.addOption("#7 Shoot and Leave Diagonal Source Side", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter, 1))
-      .andThen(new MobilityCommand(drivetrain, 2.5, 70, 0)));
-    m_chooser.addOption("#8 Shoot and Leave Diagonal Amp Side RED", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter, 1))
-      .andThen(new MobilityCommand(drivetrain, 2.5, 70, -40)));
-    m_chooser.addOption("#9 Shoot and Leave Diagonal Amp Side BLUE", new TimedDelay(() -> delay.getDouble(0))
-      .andThen(new Shoot(intake, shooter, 1))
-      .andThen(new MobilityCommand(drivetrain, 2.5, 70, 40)));
+    //m_chooser.addOption("#2 Leave", new MobilityCommand(drivetrain, 1.5, 70, 0));
+    // m_chooser.addOption("#3 Shoot, Drive to Note", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen (new Shoot(intake, shooter, 1))
+    //   .andThen(new DriveToNote(drivetrain, noteCamera, intake)));
+    // m_chooser.addOption("#4 Shoot and Leave", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen(new Shoot(intake, shooter,1))
+    //   .andThen(new MobilityCommand(drivetrain, 1.5, 70, 0)));
+    // m_chooser.addOption("#5 Shoot, Drive to Note, Shoot", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen(new Shoot(intake, shooter, 1))
+    //   .andThen(new DriveToNote(drivetrain, noteCamera, intake))
+    //   .andThen(new TimedIntake(intake, .05))
+    //   .andThen(new MobilityCommand(drivetrain, 1, 70, 0))
+    //   .andThen(new MobilityCommand(drivetrain, 3.2, -70, 0))
+    //   .andThen(new Shoot(intake, shooter, 1)));
+    // m_chooser.addOption("#6 Amp (Blue)", new MobilityCommand(drivetrain, 0.75, 0, -30)
+    //   .andThen(new Shoot(intake, shooter, 0.275))
+    //   .andThen(new WaitCommand(0.5)
+    //   .andThen(new MobilityCommand(drivetrain, 5, 0, -30))));
+    // m_chooser.addOption("#6 Amp (Red)", new MobilityCommand(drivetrain, 0.75, 0, 30)
+    //   .andThen(new Shoot(intake, shooter, 0.275))
+    //   .andThen(new WaitCommand(0.5)
+    //   .andThen(new MobilityCommand(drivetrain, 5, 0, 30))));
+    // m_chooser.addOption("#7 Shoot and Leave Diagonal Source Side", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen(new Shoot(intake, shooter, 1))
+    //   .andThen(new MobilityCommand(drivetrain, 2.5, 70, 0)));
+    // m_chooser.addOption("#8 Shoot and Leave Diagonal Amp Side RED", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen(new Shoot(intake, shooter, 1))
+    //   .andThen(new MobilityCommand(drivetrain, 2.5, 70, -40)));
+    // m_chooser.addOption("#9 Shoot and Leave Diagonal Amp Side BLUE", new TimedDelay(() -> delay.getDouble(0))
+    //   .andThen(new Shoot(intake, shooter, 1))
+    //   .andThen(new MobilityCommand(drivetrain, 2.5, 70, 40)));
     m_chooser.addOption("#10 Shoot", new TimedDelay(() -> delay.getDouble(0))
     .andThen(new Shoot(intake, shooter, 1)));
     //m_chooser.addOption("#10 Drive to Speaker", new DriveToAprilTag(drivetrain, aprilTagCamera, true, 0.1));
@@ -161,10 +220,10 @@ public class RobotContainer {
 
     // Reset gyro on driver back button press
     final Trigger driverBackButton = driveController.back();
-    driverBackButton.onTrue(new InstantCommand(()->drivetrain.zeroGyroscope()));
+   // driverBackButton.onTrue(new InstantCommand(()->drivetrain.zeroGyroscope()));
 
     final Trigger driverYButton = driveController.y();
-    driverYButton.whileTrue(new DriveToNote(drivetrain, noteCamera, intake));
+ //   driverYButton.whileTrue(new DriveToNote(drivetrain, noteCamera, intake));
 
     // Vibrate controllers when color sensor detects a note
     final Trigger colorSensorTrigger = new Trigger(() -> intake.getColorSensor());
