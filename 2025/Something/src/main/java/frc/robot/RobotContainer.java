@@ -5,6 +5,7 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.DriveDistance;
 import frc.robot.subsystems.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -20,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
   private final Lift lift = new Lift();
+  private final CoralManipulator coralManipulator = new CoralManipulator();
 
   private final CommandXboxController driverController =
     new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
@@ -28,15 +30,14 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    drivetrain.setDefaultCommand(new RunCommand(() -> {
-      drivetrain.drive(
-        driverController.getLeftX(),
-        driverController.getLeftY(),
-        driverController.getRightX());
-    }, drivetrain));
+    drivetrain.setDefaultCommand(drivetrain.driveCommand(
+      () -> driverController.getLeftX(),
+      () -> driverController.getLeftY(),
+      () -> driverController.getRightX()
+    ));
 
     lift.setDefaultCommand(new RunCommand(() -> {
-      lift.setVelocity(supportController.getLeftY());
+      //lift.setVelocity(supportController.getLeftY());
     }, lift));
 
     configureBindings();
@@ -52,7 +53,10 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-
+    supportController.y().onTrue(new RunCommand(coralManipulator::goUp, coralManipulator));
+    supportController.x().onTrue(new RunCommand(coralManipulator::goDown, coralManipulator));    
+    supportController.b().onTrue(new RunCommand(coralManipulator::latch, coralManipulator));
+    supportController.a().onTrue(new RunCommand(coralManipulator::unlatch, coralManipulator));
   }
 
   /**
@@ -61,6 +65,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return null;
+    return new DriveDistance(drivetrain, 1, 0, 0.25);
   }
 }

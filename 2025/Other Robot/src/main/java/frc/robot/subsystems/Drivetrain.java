@@ -10,8 +10,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Drivetrain extends SubsystemBase {
   private final PWMSparkMax frontLeftMotor = new PWMSparkMax(0);
-  private final PWMSparkMax backLeftMotor = new PWMSparkMax(1);
-  private final PWMSparkMax frontRightMotor = new PWMSparkMax(3);
+  private final PWMSparkMax backLeftMotor = new PWMSparkMax(3);
+  private final PWMSparkMax frontRightMotor = new PWMSparkMax(1);
   private final PWMSparkMax backRightMotor = new PWMSparkMax(2);
 
   private final DifferentialDrive drivebase = new DifferentialDrive(frontLeftMotor, frontRightMotor);

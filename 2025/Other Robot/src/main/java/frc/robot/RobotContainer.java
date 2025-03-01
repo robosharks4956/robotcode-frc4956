@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
+  private final CoralManipulator coralManipulator = new CoralManipulator();
 
   private final CommandXboxController driverController =
     new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
@@ -46,7 +47,10 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-
+    driverController.y().onTrue(new RunCommand(coralManipulator::goUp, coralManipulator));
+    driverController.x().onTrue(new RunCommand(coralManipulator::goDown, coralManipulator));    
+    driverController.b().onTrue(new RunCommand(coralManipulator::latch, coralManipulator));
+    driverController.a().onTrue(new RunCommand(coralManipulator::unlatch, coralManipulator));
   }
 
   /**

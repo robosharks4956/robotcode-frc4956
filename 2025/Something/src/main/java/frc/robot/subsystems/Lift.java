@@ -17,38 +17,27 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Lift extends SubsystemBase {
-  private final SparkMax leftMotor = new SparkMax(10, MotorType.kBrushless);
-  private final SparkMax rightMotor = new SparkMax(11, MotorType.kBrushless);
+  private final SparkMax motor = new SparkMax(10, MotorType.kBrushless);
 
-  private final SparkMaxConfig leftConfig = new SparkMaxConfig();
-  private final SparkMaxConfig rightConfig = new SparkMaxConfig();
+  private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
-  private final SparkClosedLoopController closedLoopController = leftMotor.getClosedLoopController();
+  private final SparkClosedLoopController closedLoopController = motor.getClosedLoopController();
 
   /** Creates a new Lift. */
   public Lift() {
-    leftConfig.inverted(false);
-    leftConfig.idleMode(IdleMode.kBrake);
-    leftConfig.closedLoop.p(0).i(0).d(0).outputRange(0, 0);
-    
-    rightConfig.inverted(true);
-    rightConfig.idleMode(IdleMode.kBrake);
-    rightConfig.follow(leftMotor);
+    motorConfig.inverted(false);
+    motorConfig.idleMode(IdleMode.kBrake);
+    motorConfig.closedLoop.p(0).i(0).d(0).outputRange(0, 0);
 
-    leftMotor.configure(
-      leftConfig,
-      ResetMode.kNoResetSafeParameters,
-      PersistMode.kPersistParameters);
-
-    rightMotor.configure(
-      rightConfig,
+    motor.configure(
+      motorConfig,
       ResetMode.kNoResetSafeParameters,
       PersistMode.kPersistParameters);
   }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Lift Encoder Position", leftMotor.getEncoder().getPosition());
+    SmartDashboard.putNumber("Lift Encoder Position", motor.getEncoder().getPosition());
   }
 
   /**
