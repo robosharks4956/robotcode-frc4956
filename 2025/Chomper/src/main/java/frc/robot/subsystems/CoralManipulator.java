@@ -4,28 +4,31 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.Relay.Direction;
+import edu.wpi.first.wpilibj.Relay.Value;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class CoralManipulator extends SubsystemBase {
   private final Servo angleActuator = new Servo(4);
-  private final Servo latchActuator = new Servo(5);  
+  private final Relay latchActuator = new Relay(0);  
 
   /** Creates a new CoralManipulator. */
   public CoralManipulator() {
     angleActuator.setBoundsMicroseconds(2000, 1800, 1500, 1200, 1000);
-    latchActuator.setBoundsMicroseconds(2000, 1800, 1500, 1200, 1000);
+    latchActuator.set(Value.kOn);
   }
 
   @Override
   public void periodic() {}
 
   public void latch() {
-    latchActuator.setPosition(1);
+    latchActuator.setDirection(Direction.kForward);
   }
 
   public void unlatch() {
-    latchActuator.setPosition(0);
+    latchActuator.setDirection(Direction.kReverse);
   }
 
   public void goUp() {

@@ -5,7 +5,7 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.DriveDistance;
+import frc.robot.commands.ControllerDrive;
 import frc.robot.subsystems.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -30,14 +30,14 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    drivetrain.setDefaultCommand(drivetrain.driveCommand(
+    drivetrain.setDefaultCommand(drivetrain.controllerDriveCommand(
       () -> driverController.getLeftX(),
       () -> driverController.getLeftY(),
       () -> driverController.getRightX()
     ));
 
     lift.setDefaultCommand(new RunCommand(() -> {
-      //lift.setVelocity(supportController.getLeftY());
+      lift.setVelocity(supportController.getLeftY());
     }, lift));
 
     configureBindings();
@@ -65,6 +65,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return new DriveDistance(drivetrain, 1, 0, 0.25);
+    return new ControllerDrive(1, 0, 0.25, drivetrain);
   }
 }

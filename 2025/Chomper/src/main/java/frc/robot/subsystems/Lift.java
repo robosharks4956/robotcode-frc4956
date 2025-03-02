@@ -13,31 +13,31 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Lift extends SubsystemBase {
-  private final SparkMax motor = new SparkMax(10, MotorType.kBrushless);
+  private final SparkMax motorController = new SparkMax(10, MotorType.kBrushless);
 
-  private final SparkMaxConfig motorConfig = new SparkMaxConfig();
+  private final SparkMaxConfig config = new SparkMaxConfig();
 
-  private final SparkClosedLoopController closedLoopController = motor.getClosedLoopController();
+  //private final SparkClosedLoopController closedLoopController = motorController.getClosedLoopController();
 
   /** Creates a new Lift. */
   public Lift() {
-    motorConfig.inverted(false);
-    motorConfig.idleMode(IdleMode.kBrake);
-    motorConfig.closedLoop.p(0).i(0).d(0).outputRange(0, 0);
+    config.inverted(false);
+    config.idleMode(IdleMode.kBrake);
+    //config.closedLoop.p(0).i(0).d(0).outputRange(0, 0);
 
-    motor.configure(
-      motorConfig,
-      ResetMode.kNoResetSafeParameters,
-      PersistMode.kPersistParameters);
+    motorController.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    //Hi Code Team! -build team.
+    System.out.print("Hello Code Team!");
   }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Lift Encoder Position", motor.getEncoder().getPosition());
+    SmartDashboard.putNumber("Lift Encoder Position", motorController.getEncoder().getPosition());
   }
 
   /**
@@ -45,7 +45,7 @@ public class Lift extends SubsystemBase {
    * @param velocity The desired velocity of the lift.
    */
   public void setVelocity(double velocity) {
-    closedLoopController.setReference(velocity, ControlType.kVelocity);
+    motorController.set(MathUtil.applyDeadband(velocity, 0.05));//closedLoopController.setReference(velocity, ControlType.kVelocity);
   }
 
   /**
@@ -53,6 +53,6 @@ public class Lift extends SubsystemBase {
    * @param position The desired position of the lift.
    */
   public void setPosition(double position) {
-    closedLoopController.setReference(position, ControlType.kPosition);
+    //closedLoopController.setReference(position, ControlType.kPosition);
   }
 }

@@ -12,7 +12,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.robot.Constants.SwerveConstants;
+
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
@@ -39,14 +41,14 @@ public class Drivetrain extends SubsystemBase {
    * Drives the robot.
    * @param xVelocity Desired X velocity of the robot.
    * @param yVelocity Desired Y velocity of the robot.
-   * @param angularVelocity Desired angular velocity or the robot..
+   * @param angularVelocity Desired angular velocity or the robot.
    */
   public void drive(double xVelocity, double yVelocity, double angularVelocity) {
     swerveDrive.setHeadingCorrection(true);
       swerveDrive.drive(
         new Translation2d(
-          xVelocity * swerveDrive.getMaximumChassisVelocity(),
-          yVelocity * swerveDrive.getMaximumChassisVelocity()
+          yVelocity * swerveDrive.getMaximumChassisVelocity(),
+          xVelocity * swerveDrive.getMaximumChassisVelocity()
         ),
         angularVelocity * swerveDrive.getMaximumChassisAngularVelocity(),
         true,
@@ -55,37 +57,25 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns a command that drives the robot.
-   * @param xVelocity Desired X velocity of the robot.
-   * @param yVelocity Desired Y velocity of the robot.
-   * @param angularVelocity Desired angular velocity or the robot.
-   * @return
-   * The command that drives the robot.
-   */
-  public Command driveCommand(double xVelocity, double yVelocity, double angularVelocity) {
-    return runOnce(() -> {
-      drive(xVelocity, yVelocity, angularVelocity);
-    });
-  }
-
-  /**
-   * Returns a command that drives the robot using input suppliers.
-   * @param xVelocitySupplier The supplier for the desired X velocity of the robot.
-   * @param yVelocitySupplier The supplier for the desired Y velocity of the robot.
+   * Creates a command that drives the robot using input suppliers.
+   * @param xVelocitySupplier The supplier for the desired velocity of the robot in the X direction.
+   * @param yVelocitySupplier The supplier for the desired velocity of the robot in the Y direction.
    * @param angularVelocitySupplier The supplier for the desired angular velocity of the robot.
-   * @return
-   * The command that drives the robot using the input suppliers.
+   * @return The command that drives the robot using input suppliers.
    */
-  public Command driveCommand(DoubleSupplier xVelocitySupplier, DoubleSupplier yVelocitySupplier, DoubleSupplier angularVelocitySupplier) {
+  public Command controllerDriveCommand(
+    DoubleSupplier xVelocitySupplier,
+    DoubleSupplier yVelocitySupplier,
+    DoubleSupplier angularVelocitySupplier
+  ) {
     return run(() -> {
       drive(xVelocitySupplier.getAsDouble(), yVelocitySupplier.getAsDouble(), angularVelocitySupplier.getAsDouble());
     });
   }
 
   /**
-   * Returns the current translation of the robot.
+   * Gets the 
    * @return
-   * The current translation of the robot.
    */
   public Translation2d getTranslation() {
     return swerveDrive.getPose().getTranslation();
