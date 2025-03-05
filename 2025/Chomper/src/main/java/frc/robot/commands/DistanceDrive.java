@@ -8,18 +8,17 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Drivetrain;
 
-/* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class ControllerDrive extends Command {
+public class DistanceDrive extends Command {
   private final double distance;
-  private final double velocityX;
-  private final double velocityY;
+  private final double percentVelocityX;
+  private final double percentVelocityY;
   private final Drivetrain drivetrain;
   
-    /** Creates a new ControllerDrive. */
-  public ControllerDrive(double distanceX, double distanceY, double velocity, Drivetrain drivetrain) {
-    this.distance = Math.hypot(distanceX, distanceY);
-    this.velocityX = velocity * distanceX / this.distance;
-    this.velocityY = velocity * distanceY / this.distance;
+    /** Creates a new DistanceDrive. */
+  public DistanceDrive(double distanceX, double distanceY, double percentVelocity, Drivetrain drivetrain) {
+    distance = Math.hypot(distanceX, distanceY);
+    percentVelocityX = percentVelocity * distanceX / this.distance;
+    percentVelocityY = percentVelocity * distanceY / this.distance;
 
     this.drivetrain = drivetrain;
 
@@ -35,7 +34,7 @@ public class ControllerDrive extends Command {
 
   @Override
   public void execute() {
-    drivetrain.drive(velocityX, velocityY, 0);
+    drivetrain.drive(percentVelocityX, percentVelocityY, 0, true);
   }
 
   @Override

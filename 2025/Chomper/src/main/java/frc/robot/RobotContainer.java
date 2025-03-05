@@ -5,12 +5,20 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.ControllerDrive;
+import frc.robot.commands.DistanceDrive;
+import frc.robot.commands.LiftPosition;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import static frc.robot.Constants.OperatorConstants;
+
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -28,17 +36,14 @@ public class RobotContainer {
   private final CommandXboxController supportController =
     new CommandXboxController(OperatorConstants.SUPPORT_CONTROLLER_PORT);
 
+  private final SendableChooser<Command> chooser = new SendableChooser<Command>();
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    drivetrain.setDefaultCommand(drivetrain.controllerDriveCommand(
-      () -> driverController.getLeftX(),
-      () -> driverController.getLeftY(),
-      () -> driverController.getRightX()
-    ));
+    SmartDashboard.putBoolean("Field Relative", true);
 
-    lift.setDefaultCommand(new RunCommand(() -> {
-      lift.setVelocity(supportController.getLeftY());
-    }, lift));
+    chooser.setDefaultOption("#1 Nothing", new InstantCommand());
+    chooser.addOption("#2 Leave", new DistanceDrive(1, 0, .25, drivetrain));
 
     configureBindings();
   }
@@ -53,10 +58,38 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    drivetrain.setDefaultCommand(drivetrain.controllerDriveCommand(
+      () -> modifyAxis(driverController.getLeftX(), 1, 0.05, 3),
+      () -> modifyAxis(driverController.getLeftY(), 1, 0.05, 3),
+      () -> modifyAxis(driverController.getRightX(), 1, 0.05, 3),
+      () -> SmartDashboard.getBoolean("Field Relative", false)
+    ));
+
+    // lift.setDefaultCommand(new RunCommand(() -> {
+    //   //lift.setVelocity(modifyAxis(supportController.getLeftY(), 1, 0.05, 3));
+    // }, lift));
+
     supportController.y().onTrue(new RunCommand(coralManipulator::goUp, coralManipulator));
     supportController.x().onTrue(new RunCommand(coralManipulator::goDown, coralManipulator));    
     supportController.b().onTrue(new RunCommand(coralManipulator::latch, coralManipulator));
     supportController.a().onTrue(new RunCommand(coralManipulator::unlatch, coralManipulator));
+    supportController.povLeft().whileTrue(new LiftPosition(-46, lift));
+    supportController.povUp().whileTrue(new LiftPosition(-25, lift));
+    supportController.povRight().whileTrue(new LiftPosition(-10, lift));
+  }
+
+  /**
+   * Returns a modified joystick axis for better controls.
+   * @param input The unmodified joystick axis.
+   * @param maxPercent The maximum distance from 0 the modified axis can be.
+   * @param deadband The distance from 0 where the unmodified can be treated as 0.
+   * @param smoothing The exponent used to smooth out the axis.
+   * @return The modified joystick axis.
+   */
+  private double modifyAxis(double input, double maxPercent, double deadband, double smoothing) {
+    return MathUtil.clamp(Math.copySign(
+      Math.pow(Math.abs(MathUtil.applyDeadband(input, deadband)), smoothing), input), -maxPercent, maxPercent
+    );
   }
 
   /**
@@ -65,6 +98,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return new ControllerDrive(1, 0, 0.25, drivetrain);
+    return chooser.getSelected();
   }
 }
