@@ -19,6 +19,14 @@ public final class Constants {
   }
 
   public static class SwerveConstants {
-    public static final double MAX_SPEED = 1.5;
+    public static final String SWERVE_DIRECTORY = "swerve";
+    public static final double MAX_SPEED = 5;
   }
+
+  public static class SubsystemConstants {
+    public static final int LIFT_MOTOR_CONTROLLER_ID = 10;
+  }
+
+  public static final int ANGLE_ACTUATOR_PWM_CHANNEL = 5;
+  public static final int LATCH_ACTUATOR_PWM_CHANNEL = 6;
 }

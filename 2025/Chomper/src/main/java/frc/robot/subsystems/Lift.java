@@ -12,25 +12,27 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import static frc.robot.Constants.SubsystemConstants;
+
 public class Lift extends SubsystemBase {
-  private final SparkMax motorController = new SparkMax(10, MotorType.kBrushless);
+  private final SparkMax motorController = 
+    new SparkMax(SubsystemConstants.LIFT_MOTOR_CONTROLLER_ID, MotorType.kBrushless);
 
   private final SparkMaxConfig config = new SparkMaxConfig();
 
-  //private final SparkClosedLoopController closedLoopController = motorController.getClosedLoopController();
+  private final SparkClosedLoopController closedLoopController = motorController.getClosedLoopController();
 
   /** Creates a new Lift. */
   public Lift() {
     config.inverted(false);
     config.idleMode(IdleMode.kBrake);
-    //config.closedLoop.p(0).i(0).d(0).outputRange(0, 0);
+    config.closedLoop.p(0.1).i(0).d(0).outputRange(-0.35, 0); // 0 because gravity is good enough.
 
     motorController.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    motorController.getEncoder().setPosition(0);
     //Hi Code Team! -build team.
     System.out.print("Hello Code Team!");
   }
@@ -42,10 +44,11 @@ public class Lift extends SubsystemBase {
 
   /**
    * Sets the velocity of the lift.
-   * @param velocity The desired velocity of the lift.
+   * @param percentVelocity The desired percent of the max velocity of the lift.
    */
-  public void setVelocity(double velocity) {
-    motorController.set(MathUtil.applyDeadband(velocity, 0.05));//closedLoopController.setReference(velocity, ControlType.kVelocity);
+  public void setVelocity(double percentVelocity) {
+    motorController.set(percentVelocity * 0.4);
+    //closedLoopController.setReference(velocity, ControlType.kVelocity);
   }
 
   /**
@@ -53,6 +56,6 @@ public class Lift extends SubsystemBase {
    * @param position The desired position of the lift.
    */
   public void setPosition(double position) {
-    //closedLoopController.setReference(position, ControlType.kPosition);
+    closedLoopController.setReference(position, ControlType.kPosition);
   }
 }
