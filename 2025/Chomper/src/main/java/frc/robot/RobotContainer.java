@@ -4,21 +4,22 @@
 
 package frc.robot;
 
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.DistanceDrive;
-import frc.robot.commands.LiftPosition;
 import frc.robot.subsystems.*;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import static frc.robot.Constants.OperatorConstants;
-
+import static frc.robot.Constants.OperatorConstants.*;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -30,20 +31,43 @@ public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
   private final Lift lift = new Lift();
   private final CoralManipulator coralManipulator = new CoralManipulator();
+  private final TailFin tailFin = new TailFin();
 
-  private final CommandXboxController driverController =
-    new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
+  private final CommandXboxController driveController =
+    new CommandXboxController(DRIVE_CONTROLLER_PORT);
   private final CommandXboxController supportController =
-    new CommandXboxController(OperatorConstants.SUPPORT_CONTROLLER_PORT);
+    new CommandXboxController(SUPPORT_CONTROLLER_PORT);
+
+  private final SlewRateLimiter driveXLimiter = new SlewRateLimiter(2);
+  private final SlewRateLimiter driveYLimiter = new SlewRateLimiter(2);
+  private final SlewRateLimiter turnLimiter = new SlewRateLimiter(2);
 
   private final SendableChooser<Command> chooser = new SendableChooser<Command>();
 
+  private final ShuffleboardTab driveTab = Shuffleboard.getTab("Drive");
+
+  private final GenericEntry fieldRelative = driveTab
+    .add("Field Relative", true)
+    .withWidget(BuiltInWidgets.kToggleSwitch)
+    .getEntry();
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    SmartDashboard.putBoolean("Field Relative", true);
+    driveTab.add("Autonomous", chooser);
+    SmartDashboard.putData("Autonomous", chooser);
 
-    chooser.setDefaultOption("#1 Nothing", new InstantCommand());
-    chooser.addOption("#2 Leave", new DistanceDrive(1, 0, .25, drivetrain));
+    chooser.addOption("#1 Nothing.", new InstantCommand());
+
+    chooser.setDefaultOption("#2 Leave.", drivetrain.distanceDriveCommand(0, 1, 0.3));
+
+    chooser.addOption("#3: Timed drive and drop into L1.", Commands.sequence(
+      drivetrain.timeDriveCommand(0, 0.2, 0, 1.5),
+      drivetrain.timeDriveCommand(0, 0.1, 0, 2.5),
+      coralManipulator.unlatchCommand(),
+      Commands.print("Made it!"),
+      Commands.waitSeconds(1),
+      drivetrain.timeDriveCommand(0.05, 0, 0, 0.5)
+    ));
 
     configureBindings();
   }
@@ -59,36 +83,42 @@ public class RobotContainer {
    */
   private void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.controllerDriveCommand(
-      () -> modifyAxis(driverController.getLeftX(), 1, 0.05, 3),
-      () -> modifyAxis(driverController.getLeftY(), 1, 0.05, 3),
-      () -> modifyAxis(driverController.getRightX(), 1, 0.05, 3),
-      () -> SmartDashboard.getBoolean("Field Relative", false)
-    ));
+      () -> driveXLimiter.calculate(modifyAxis(driveController.getLeftX(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
+      () -> driveYLimiter.calculate(modifyAxis(driveController.getLeftY(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
+      () -> turnLimiter.calculate(modifyAxis(driveController.getRightX(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
+      () -> fieldRelative.getBoolean(false)
+    )); 
 
-    // lift.setDefaultCommand(new RunCommand(() -> {
-    //   //lift.setVelocity(modifyAxis(supportController.getLeftY(), 1, 0.05, 3));
-    // }, lift));
+    driveController.back().onTrue(drivetrain.resetGyroCommand());
 
-    supportController.y().onTrue(new RunCommand(coralManipulator::goUp, coralManipulator));
-    supportController.x().onTrue(new RunCommand(coralManipulator::goDown, coralManipulator));    
-    supportController.b().onTrue(new RunCommand(coralManipulator::latch, coralManipulator));
-    supportController.a().onTrue(new RunCommand(coralManipulator::unlatch, coralManipulator));
-    supportController.povLeft().whileTrue(new LiftPosition(-46, lift));
-    supportController.povUp().whileTrue(new LiftPosition(-25, lift));
-    supportController.povRight().whileTrue(new LiftPosition(-10, lift));
+    tailFin.setDefaultCommand(tailFin.hangCommand(() -> modifyAxis(supportController.getLeftY(), 0.2, 0.05, 3)));    
+
+    supportController.y().onTrue(coralManipulator.upperCommand());
+    supportController.x().onTrue(coralManipulator.lowerCommand());    
+    supportController.b().onTrue(coralManipulator.latchCommand());
+    supportController.a().onTrue(coralManipulator.unlatchCommand());
+
+    //supportController.povLeft().onTrue(lift.setPositionCommand(-47));
+    supportController.povUp().onTrue(lift.setPositionCommand(-24));
+    supportController.povRight().onTrue(lift.setPositionCommand(-10));
+    supportController.povDown().onTrue(lift.setPositionCommand(0));
+
+    supportController.back().onTrue(lift.resetEncoderCommand());
   }
 
   /**
    * Returns a modified joystick axis for better controls.
    * @param input The unmodified joystick axis.
    * @param maxPercent The maximum distance from 0 the modified axis can be.
-   * @param deadband The distance from 0 where the unmodified can be treated as 0.
+   * @param deadband The distance from 0 where the unmodified axis can be treated as 0.
    * @param smoothing The exponent used to smooth out the axis.
    * @return The modified joystick axis.
    */
   private double modifyAxis(double input, double maxPercent, double deadband, double smoothing) {
-    return MathUtil.clamp(Math.copySign(
-      Math.pow(Math.abs(MathUtil.applyDeadband(input, deadband)), smoothing), input), -maxPercent, maxPercent
+    return MathUtil.clamp(
+      Math.copySign(Math.pow(Math.abs(MathUtil.applyDeadband(input, deadband)), smoothing), input) * maxPercent,
+      -maxPercent,
+      maxPercent
     );
   }
 

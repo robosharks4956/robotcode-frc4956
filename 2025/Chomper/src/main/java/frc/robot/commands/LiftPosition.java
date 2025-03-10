@@ -24,12 +24,12 @@ public class LiftPosition extends Command {
 
   @Override
   public void execute() {
-    lift.setPosition(position);
+    lift.setPositionCommand(position);
   }
 
   @Override
   public void end(boolean interrupted) {
-    lift.setPosition(0);
+    lift.setPositionCommand(0);
   }
 
   @Override

@@ -14,7 +14,7 @@ package frc.robot;
  */
 public final class Constants {
   public static class OperatorConstants {
-    public static final int DRIVER_CONTROLLER_PORT = 0;
+    public static final int DRIVE_CONTROLLER_PORT = 0;
     public static final int SUPPORT_CONTROLLER_PORT = 1;
   }
 
@@ -23,10 +23,16 @@ public final class Constants {
     public static final double MAX_SPEED = 5;
   }
 
-  public static class SubsystemConstants {
-    public static final int LIFT_MOTOR_CONTROLLER_ID = 10;
+  public static class LiftConstants {
+    public static final int MOTOR_CONTROLLER_ID = 10;
   }
 
-  public static final int ANGLE_ACTUATOR_PWM_CHANNEL = 5;
-  public static final int LATCH_ACTUATOR_PWM_CHANNEL = 6;
+  public static class CoralManipulatorConstants {
+    public static final int ANGLE_MOTOR_CONTROLLER_ID = 14;
+    public static final int LATCH_ACTUATOR_PWM_CHANNEL = 6;
+  }
+
+  public static class TailFinConstants {
+    public static final int MOTOR_CONTROLLER_ID = 12;
+  }
 }

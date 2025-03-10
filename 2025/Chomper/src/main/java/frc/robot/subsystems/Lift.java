@@ -13,23 +13,22 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import static frc.robot.Constants.SubsystemConstants;
+import static frc.robot.Constants.LiftConstants.*;
 
 public class Lift extends SubsystemBase {
-  private final SparkMax motorController = 
-    new SparkMax(SubsystemConstants.LIFT_MOTOR_CONTROLLER_ID, MotorType.kBrushless);
-
+  private final SparkMax motorController = new SparkMax(MOTOR_CONTROLLER_ID, MotorType.kBrushless);
   private final SparkMaxConfig config = new SparkMaxConfig();
-
   private final SparkClosedLoopController closedLoopController = motorController.getClosedLoopController();
 
   /** Creates a new Lift. */
   public Lift() {
     config.inverted(false);
     config.idleMode(IdleMode.kBrake);
-    config.closedLoop.p(0.1).i(0).d(0).outputRange(-0.35, 0); // 0 because gravity is good enough.
+    config.closedLoop.p(0.1).i(0).d(0).outputRange(-0.3, 0.25);
+    config.closedLoopRampRate(1);
 
     motorController.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     motorController.getEncoder().setPosition(0);
@@ -43,19 +42,19 @@ public class Lift extends SubsystemBase {
   }
 
   /**
-   * Sets the velocity of the lift.
-   * @param percentVelocity The desired percent of the max velocity of the lift.
+   * Creates a command that sets the position of the lift.
+   * @param position The desired position of the lift.
+   * @return The command that sets the position of the lift.
    */
-  public void setVelocity(double percentVelocity) {
-    motorController.set(percentVelocity * 0.4);
-    //closedLoopController.setReference(velocity, ControlType.kVelocity);
+  public Command setPositionCommand(double position) {
+    return runOnce(() -> closedLoopController.setReference(position, ControlType.kPosition));
   }
 
   /**
-   * Sets the position of the lift.
-   * @param position The desired position of the lift.
+   * Creates a command that resets the encoder to 0.
+   * @return The command that resets the encoder to 0.
    */
-  public void setPosition(double position) {
-    closedLoopController.setReference(position, ControlType.kPosition);
+  public Command resetEncoderCommand() {
+    return runOnce(() -> motorController.getEncoder().setPosition(0));
   }
 }
