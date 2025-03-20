@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -32,15 +33,14 @@ public class RobotContainer {
   private final Lift lift = new Lift();
   private final CoralManipulator coralManipulator = new CoralManipulator();
   private final TailFin tailFin = new TailFin();
+  private final AngleMotor angleMotor = new AngleMotor();
 
   private final CommandXboxController driveController =
     new CommandXboxController(DRIVE_CONTROLLER_PORT);
   private final CommandXboxController supportController =
     new CommandXboxController(SUPPORT_CONTROLLER_PORT);
 
-  private final SlewRateLimiter driveXLimiter = new SlewRateLimiter(2);
-  private final SlewRateLimiter driveYLimiter = new SlewRateLimiter(2);
-  private final SlewRateLimiter turnLimiter = new SlewRateLimiter(2);
+  
 
   private final SendableChooser<Command> chooser = new SendableChooser<Command>();
 
@@ -64,9 +64,25 @@ public class RobotContainer {
       drivetrain.timeDriveCommand(0, 0.2, 0, 1.5),
       drivetrain.timeDriveCommand(0, 0.1, 0, 2.5),
       coralManipulator.unlatchCommand(),
-      Commands.print("Made it!"),
       Commands.waitSeconds(1),
-      drivetrain.timeDriveCommand(0.05, 0, 0, 0.5)
+      coralManipulator.latchCommand(),
+      drivetrain.timeDriveCommand(0.05, 0, 0, 1.5)
+    ));
+
+    chooser.addOption("#4: Timed drive and drop into L4.", Commands.sequence(
+      drivetrain.timeDriveCommand(0, 0.2, 0, 1.5),
+      drivetrain.timeDriveCommand(0, 0.1, 0, 2.5),
+      drivetrain.timeDriveCommand(0, -0.05, 0, 0.25),
+      lift.setPositionCommand(-46),
+      Commands.waitSeconds(3),
+      drivetrain.timeDriveCommand(0, 0.05, 0, 0.25),
+      coralManipulator.unlatchCommand(),
+      Commands.waitSeconds(1),
+      coralManipulator.latchCommand(),
+      Commands.waitSeconds(1),
+      drivetrain.timeDriveCommand(0, -0.05, 0, 0.25),
+      lift.setPositionCommand(0),
+      Commands.waitSeconds(3)
     ));
 
     configureBindings();
@@ -82,24 +98,33 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    double speed = 1;
+    if(driveController.rightBumper().getAsBoolean()){
+      speed=.1;
+    }
+    if(driveController.leftBumper().getAsBoolean()){
+      speed=.3;
+    }
     drivetrain.setDefaultCommand(drivetrain.controllerDriveCommand(
-      () -> driveXLimiter.calculate(modifyAxis(driveController.getLeftX(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
-      () -> driveYLimiter.calculate(modifyAxis(driveController.getLeftY(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
-      () -> turnLimiter.calculate(modifyAxis(driveController.getRightX(), driveController.getRightTriggerAxis() > 0.5 || driveController.rightBumper().getAsBoolean() ? 0.1 : 1, 0.05, 3)),
+      () -> (modifyAxis(driveController.getLeftX(), driveController.rightBumper().getAsBoolean() ? 0.1 : driveController.leftBumper().getAsBoolean() ? 1 : 0.5, 0.05, 3)),
+      () -> (modifyAxis(driveController.getLeftY(), driveController.rightBumper().getAsBoolean() ? 0.1 : driveController.leftBumper().getAsBoolean() ? 1 : 0.5, 0.05, 3)),
+      () -> (modifyAxis(driveController.getRightX(), driveController.rightBumper().getAsBoolean() ? 0.15 : 0.75, 0.05, 3)),
       () -> fieldRelative.getBoolean(false)
     )); 
 
     driveController.back().onTrue(drivetrain.resetGyroCommand());
 
-    tailFin.setDefaultCommand(tailFin.hangCommand(() -> modifyAxis(supportController.getLeftY(), 0.2, 0.05, 3)));    
+    angleMotor.setDefaultCommand(angleMotor.lowerCommand());
 
-    supportController.y().onTrue(coralManipulator.upperCommand());
-    supportController.x().onTrue(coralManipulator.lowerCommand());    
+    tailFin.setDefaultCommand(tailFin.hangCommand(() -> modifyAxis(supportController.getLeftY(), 0.5, 0.05, 3)));    
+
+    supportController.y().onTrue(angleMotor.upperCommand());
+    supportController.x().onTrue(angleMotor.lowerCommand());    
     supportController.b().onTrue(coralManipulator.latchCommand());
     supportController.a().onTrue(coralManipulator.unlatchCommand());
 
-    //supportController.povLeft().onTrue(lift.setPositionCommand(-47));
-    supportController.povUp().onTrue(lift.setPositionCommand(-24));
+    supportController.povLeft().onTrue(lift.setPositionCommand(-46));
+    supportController.povUp().onTrue(lift.setPositionCommand(-23));
     supportController.povRight().onTrue(lift.setPositionCommand(-10));
     supportController.povDown().onTrue(lift.setPositionCommand(0));
 
@@ -107,6 +132,7 @@ public class RobotContainer {
   }
 
   /**
+   * 
    * Returns a modified joystick axis for better controls.
    * @param input The unmodified joystick axis.
    * @param maxPercent The maximum distance from 0 the modified axis can be.

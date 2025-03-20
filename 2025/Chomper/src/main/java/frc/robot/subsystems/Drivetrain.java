@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
@@ -100,12 +99,12 @@ public class Drivetrain extends SubsystemBase {
     final Translation initialTranslation = new Translation();
 
     return runOnce(() -> initialTranslation.translation = new Translation2d()).andThen(run(
-      () -> drive(percentVelocityX, percentVelocityY, 0, true)
+      () -> drive(percentVelocityX, percentVelocityY, 0, false)
     )).until(() -> swerveDrive.getPose().getTranslation().getDistance(new Translation2d()) > distance);
   }
   
   public Command timeDriveCommand(double percentXVelocity, double percentYVelocity, double percentAngularVelocity, double time) {
-    return runEnd(() -> drive(percentXVelocity, percentYVelocity, percentAngularVelocity, true), () -> drive(0, 0, 0, true)).withTimeout(time);
+    return runEnd(() -> drive(percentXVelocity, percentYVelocity, percentAngularVelocity, false), () -> drive(0, 0, 0, true)).withTimeout(time);
   }
 
   /**
