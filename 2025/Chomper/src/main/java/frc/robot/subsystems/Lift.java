@@ -27,7 +27,7 @@ public class Lift extends SubsystemBase {
   public Lift() {
     config.inverted(false);
     config.idleMode(IdleMode.kBrake);
-    config.closedLoop.p(0.1).i(0).d(0).outputRange(-0.3, 0.25);
+    config.closedLoop.p(0.05).i(0).d(0).outputRange(-0.5, 0.4);
     config.closedLoopRampRate(1);
 
     motorController.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
@@ -39,6 +39,7 @@ public class Lift extends SubsystemBase {
   @Override
   public void periodic() {
     SmartDashboard.putNumber("Lift Encoder Position", motorController.getEncoder().getPosition());
+    SmartDashboard.putNumber("Lift Output Position", motorController.getAppliedOutput());
   }
 
   /**
@@ -46,9 +47,26 @@ public class Lift extends SubsystemBase {
    * @param position The desired position of the lift.
    * @return The command that sets the position of the lift.
    */
-  public Command setPositionCommand(double position) {
+  private Command setPositionCommand(double position) {
     return runOnce(() -> closedLoopController.setReference(position, ControlType.kPosition));
   }
+
+  public Command toL1Command() {
+    return setPositionCommand(0);
+  }
+
+  public Command toL2Command() {
+    return setPositionCommand(-23);
+  }
+
+  public Command toL3Command() {
+    return setPositionCommand(-56);
+  }
+
+  public Command toL4Command() {
+    return setPositionCommand(-106);
+  }
+
 
   /**
    * Creates a command that resets the encoder to 0.

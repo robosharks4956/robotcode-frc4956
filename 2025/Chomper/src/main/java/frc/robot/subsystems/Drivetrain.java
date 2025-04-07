@@ -18,6 +18,7 @@ import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 import static frc.robot.Constants.SwerveConstants.*;
+import static frc.robot.Utils.*;
 
 public class Drivetrain extends SubsystemBase {
   private final SwerveDrive swerveDrive;
@@ -28,13 +29,16 @@ public class Drivetrain extends SubsystemBase {
     File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(), SWERVE_DIRECTORY);
     try {
       swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(MAX_SPEED);
-    } catch(IOException ex) {
+    } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
+
+    swerveDrive.setCosineCompensator(true);
   }
 
-  @Override 
-  public void periodic() {}
+  @Override
+  public void periodic() {
+  }
 
   /**
    * Drives the robot.
@@ -42,69 +46,60 @@ public class Drivetrain extends SubsystemBase {
    * @param percentYVelocity Desired percent of the max velocity of the robot in the Y direction.
    * @param percentAngularVelocity Desired percent of the max angular velocity or the robot.
    */
-  private void drive(double percentXVelocity, double percentYVelocity, double percentAngularVelocity, boolean fieldRelative) {
-    swerveDrive.setHeadingCorrection(true);
-      swerveDrive.drive(
+  private void drive(double percentXVelocity, double percentYVelocity, double percentAngularVelocity,
+      boolean fieldRelative) {
+    swerveDrive.drive(
         new Translation2d(
-          percentYVelocity * swerveDrive.getMaximumChassisVelocity(),
-          percentXVelocity * swerveDrive.getMaximumChassisVelocity()
-        ),
+            percentYVelocity * swerveDrive.getMaximumChassisVelocity(),
+            percentXVelocity * swerveDrive.getMaximumChassisVelocity()),
         percentAngularVelocity * swerveDrive.getMaximumChassisAngularVelocity(),
         fieldRelative,
-        false
-      );
+        false);
   }
 
   /**
    * Creates a command that drives the robot using input suppliers.
-   * @param percentXVelocitySupplier The supplier for the desired percent of the max velocity of the robot in the X
-   * direction.
-   * @param percentYVelocitySupplier The supplier for the desired percent of the max velocity of the robot in the Y
-   * direction.
-   * @param percentAngularVelocitySupplier The supplier for the desired percent of the max angular velocity of the
-   * robot.
-   * @param fieldRelativeSupplier The supplier for whether or not the robot should be driving in field relative or
-   * robot relative.
+   * @param xInputSupplier The supplier for the X input on the controller.
+   * @param yInputSupplier The supplier for the Y input on the controller.
+   * @param angleInputSupplier The supplier for the angular input on the controller.
+   * @param slowModeSupplier   The supplier for whether or not the robot should be driving in slow mode.
+   * @param goblinModeSupplier The supplier for whether or not the robot should be driving in goblin mode.
    * @return The command that drives the robot using input suppliers.
    */
   public Command controllerDriveCommand(
-    DoubleSupplier percentXVelocitySupplier,
-    DoubleSupplier percentYVelocitySupplier,
-    DoubleSupplier percentAngularVelocitySupplier,
-    BooleanSupplier fieldRelativeSupplier
-  ) {
+      DoubleSupplier xInputSupplier,
+      DoubleSupplier yInputSupplier,
+      DoubleSupplier angleInputSupplier,
+      BooleanSupplier slowModeSupplier,
+      BooleanSupplier goblinModeSupplier) {
     return run(() -> {
       drive(
-        -percentXVelocitySupplier.getAsDouble(),
-        -percentYVelocitySupplier.getAsDouble(),
-        -percentAngularVelocitySupplier.getAsDouble(),
-        false//fieldRelativeSupplier.getAsBoolean()
+        -modifyAxis(
+          xInputSupplier.getAsDouble(),
+          slowModeSupplier.getAsBoolean() ? 0.1 : goblinModeSupplier.getAsBoolean() ? 1 : 0.5,
+          0.05,
+          3
+        ),
+        -modifyAxis(
+          yInputSupplier.getAsDouble(),
+          slowModeSupplier.getAsBoolean() ? 0.1 : goblinModeSupplier.getAsBoolean() ? 1 : 0.5,
+          0.05,
+          3
+        ),
+        -modifyAxis(angleInputSupplier.getAsDouble(), slowModeSupplier.getAsBoolean() ? 0.15 : 0.75, 0.05, 3),
+        false
       );
     });
   }
 
-  /**
-   * Creates a command that drives the robot a set distance.
-   * @param distanceX The desired distance for the robot to travel in the X direction.
-   * @param distanceY The desired distance for the robot to travel in the Y direction.
-   * @param percentVelocity The desired percent of the max velocity of the robot.
-   * @return The command that drives the robot a set distance.
-   */
-  public Command distanceDriveCommand(double distanceX, double distanceY, double percentVelocity) { 
-    final double distance = Math.hypot(distanceX, distanceY);
-    final double percentVelocityX = percentVelocity * distanceX / distance;
-    final double percentVelocityY = percentVelocity * distanceY / distance;
-
-    class Translation { public Translation2d translation = new Translation2d(); }
-    final Translation initialTranslation = new Translation();
-
-    return runOnce(() -> initialTranslation.translation = new Translation2d()).andThen(run(
-      () -> drive(percentVelocityX, percentVelocityY, 0, false)
-    )).until(() -> swerveDrive.getPose().getTranslation().getDistance(new Translation2d()) > distance);
+  public Command lockPoseCommand() {
+    return run(() -> swerveDrive.lockPose());
   }
-  
-  public Command timeDriveCommand(double percentXVelocity, double percentYVelocity, double percentAngularVelocity, double time) {
-    return runEnd(() -> drive(percentXVelocity, percentYVelocity, percentAngularVelocity, false), () -> drive(0, 0, 0, true)).withTimeout(time);
+
+  public Command timeDriveCommand(double percentXVelocity, double percentYVelocity, double percentAngularVelocity,
+      double time) {
+    return runEnd(() -> drive(percentXVelocity, percentYVelocity, percentAngularVelocity, false),
+        () -> drive(0, 0, 0, true)).withTimeout(time);
   }
 
   /**
@@ -112,6 +107,6 @@ public class Drivetrain extends SubsystemBase {
    * @return The command that resets the gyro to 0.
    */
   public Command resetGyroCommand() {
-    return run(() -> swerveDrive.zeroGyro());
+    return runOnce(() -> swerveDrive.zeroGyro());
   }
 }

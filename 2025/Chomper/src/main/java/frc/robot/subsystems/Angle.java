@@ -13,47 +13,40 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class AngleMotor extends SubsystemBase {
+public class Angle extends SubsystemBase {
   private final SparkMax motorController = new SparkMax(14, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
   
   private final SparkClosedLoopController motorClosedLoopController = motorController.getClosedLoopController();
+
+  private boolean isUpper = false;
  
-  /** Creates a new AngleMotor. */
-  public AngleMotor() {
+  /** Creates a new Angle. */
+  public Angle() {
     motorConfig.inverted(false).idleMode(IdleMode.kBrake).closedLoopRampRate(0.1);
-    motorConfig.closedLoop.pid(8.5, 0, 4.5).outputRange(0.0, 0.1);
+    motorConfig.closedLoop.pid(1.5, 0, 0.15).outputRange(-0.1, 0.1);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder).positionWrappingEnabled(false);
 
     motorController.configure(motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    
-    SmartDashboard.putNumber("Coral P", 8.5);
-    SmartDashboard.putNumber("Coral I", 0);
-    SmartDashboard.putNumber("Coral D", 4.5);
-    SmartDashboard.putNumber("Coral Min", 0);
-    SmartDashboard.putNumber("Coral Max", 0.1);
-    SmartDashboard.putNumber("Coral Ramp Rate", 0);
   }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Coral Angle Encoder Position", motorController.getAbsoluteEncoder().getPosition());
-    SmartDashboard.putNumber("Coral Angle Output", motorController.getAppliedOutput());
+    SmartDashboard.putNumber("Angle Encoder Position", motorController.getAbsoluteEncoder().getPosition());
+    SmartDashboard.putNumber("Angle Output", motorController.getAppliedOutput());
 
-    // motorConfig.closedLoopRampRate(SmartDashboard.getNumber("Coral Ramp Rate", 0)).closedLoop
-    //   .pid(SmartDashboard.getNumber("Coral P", 0), SmartDashboard.getNumber("Coral I", 0), SmartDashboard.getNumber("Coral D", 0))
-    //   .outputRange(SmartDashboard.getNumber("Coral Min", 0), SmartDashboard.getNumber("Coral Max", 0));
+    if (!SmartDashboard.containsKey("Angle Upper Position")) {
+      SmartDashboard.putNumber("Angle Upper Position", 0.225);
+    }
+    if (!SmartDashboard.containsKey("Angle Lower Position")) {
+      SmartDashboard.putNumber("Angle Lower Position", 0.1);
+    }
 
-    // SmartDashboard.putNumber("Coral P", SmartDashboard.getNumber("Coral I", 21));
+    motorClosedLoopController.setReference(isUpper ? SmartDashboard.getNumber("Angle Upper Position", 0.225) : SmartDashboard.getNumber("Angle Lower Position", 0.1), ControlType.kPosition);
   }
 
   /**
@@ -61,7 +54,7 @@ public class AngleMotor extends SubsystemBase {
    * @return The command that moves the coral manipulator to the upper position.
    */
   public Command upperCommand() {
-    return run(() -> motorClosedLoopController.setReference(0.295, ControlType.kPosition));
+    return runOnce(() -> isUpper = true);
   }
 
   /**
@@ -69,6 +62,6 @@ public class AngleMotor extends SubsystemBase {
    * @return The command that moves the coral manipulator to the lower position.
    */
   public Command lowerCommand() {
-    return run(() -> motorClosedLoopController.setReference(0.1, ControlType.kPosition));
+    return runOnce(() -> isUpper = false);
   }
 }
