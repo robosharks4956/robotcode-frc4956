@@ -4,25 +4,23 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Drivetrain extends SubsystemBase {
-  private final PWMSparkMax frontLeftMotor = new PWMSparkMax(0);
-  private final PWMSparkMax backLeftMotor = new PWMSparkMax(3);
-  private final PWMSparkMax frontRightMotor = new PWMSparkMax(1);
-  private final PWMSparkMax backRightMotor = new PWMSparkMax(2);
 
-  private final DifferentialDrive drivebase = new DifferentialDrive(frontLeftMotor, frontRightMotor);
+  private final TalonSRX frontLeftMotor = new TalonSRX(2);
+  private final TalonSRX backLeftMotor = new TalonSRX(7);
+  private final TalonSRX frontRightMotor = new TalonSRX(3);
+  private final TalonSRX backRightMotor = new TalonSRX(8);
 
   /** Creates a new Drivetrain. */
   public Drivetrain() {
-    frontLeftMotor.addFollower(backLeftMotor);
-    frontRightMotor.addFollower(backRightMotor);
-
     frontLeftMotor.setInverted(false);
+    backLeftMotor.setInverted(false);
     frontRightMotor.setInverted(true);
+    backRightMotor.setInverted(true);
   }
 
   @Override
@@ -34,6 +32,18 @@ public class Drivetrain extends SubsystemBase {
    * @param turnVelocity The desired percent of the maximum angular velocity to rotate. Negative values are clockwise.
    */
   public void drive(double driveVelocity, double turnVelocity) {
-    drivebase.arcadeDrive(driveVelocity, turnVelocity);
+
+    driveVelocity *= 01;
+    turnVelocity *= 01;
+
+    // Arcade drive calculation
+    double left_out = driveVelocity + turnVelocity;
+    double right_out = driveVelocity - turnVelocity;
+
+    frontLeftMotor.set(TalonSRXControlMode.PercentOutput, left_out);
+    backLeftMotor.set(TalonSRXControlMode.PercentOutput, left_out);
+
+    frontRightMotor.set(TalonSRXControlMode.PercentOutput, right_out);
+    backRightMotor.set(TalonSRXControlMode.PercentOutput, right_out);
   }
 }

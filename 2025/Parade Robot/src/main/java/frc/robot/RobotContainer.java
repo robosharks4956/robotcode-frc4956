@@ -6,7 +6,11 @@ package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.*;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -19,19 +23,21 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
-  private final CoralManipulator coralManipulator = new CoralManipulator();
+  private final Pneumatics pneumatics = new Pneumatics(2, 3);
+  //private final Solenoid fireSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
+  private final Shooter shooter = new Shooter();
 
   private final CommandXboxController driverController =
     new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
-  private final CommandXboxController supportController =
-    new CommandXboxController(OperatorConstants.SUPPORT_CONTROLLER_PORT);
+  //private final CommandXboxController supportController =
+  //  new CommandXboxController(OperatorConstants.SUPPORT_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     drivetrain.setDefaultCommand(new RunCommand(() -> {
       drivetrain.drive(
         driverController.getRightTriggerAxis() - driverController.getLeftTriggerAxis(),
-        -driverController.getLeftX());
+        driverController.getLeftX());
     }, drivetrain));
 
     configureBindings();
@@ -47,10 +53,15 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    driverController.y().onTrue(new RunCommand(coralManipulator::goUp, coralManipulator));
-    driverController.x().onTrue(new RunCommand(coralManipulator::goDown, coralManipulator));    
-    driverController.b().onTrue(new RunCommand(coralManipulator::latch, coralManipulator));
-    driverController.a().onTrue(new RunCommand(coralManipulator::unlatch, coralManipulator));
+    //driverController.a().onTrue(new RunCommand(pneumatics::forward, pneumatics));
+    //driverController.b().onTrue(new RunCommand(pneumatics::off, pneumatics));
+    //driverController.rightBumper().onTrue(new InstantCommand(fireSolenoid::toggle).andThen(Commands.waitSeconds(2)).andThen(fireSolenoid::toggle));
+
+    // Charge the firing cylinder for a few seconds
+    driverController.a().onTrue(new InstantCommand(pneumatics::forward).andThen(Commands.waitSeconds(3)).andThen(pneumatics::off));
+    
+    // Trigger firing solenoid
+    driverController.rightBumper().onTrue(new InstantCommand(shooter::on).andThen(Commands.waitSeconds(0.6)).andThen(shooter::off));
   }
 
   /**
