@@ -4,18 +4,18 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import static frc.robot.Constants.TailFinConstants.MOTOR_CONTROLLER_ID;
+import static frc.robot.Utils.modifyAxis;
+
+import java.util.function.DoubleSupplier;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import java.util.function.DoubleSupplier;
-
-import static frc.robot.Constants.TailFinConstants.*;
-import static frc.robot.Utils.*;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Hang extends SubsystemBase {
   private final SparkMax motorController = new SparkMax(MOTOR_CONTROLLER_ID, MotorType.kBrushless);

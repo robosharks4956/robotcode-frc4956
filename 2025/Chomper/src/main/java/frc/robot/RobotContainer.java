@@ -46,7 +46,6 @@ public class RobotContainer {
     chooser.addOption("#1 Nothing.", new InstantCommand());
 
     chooser.setDefaultOption("#2 Leave.", drivetrain.timeDriveCommand(0, 0.2, 0, 2));
-
     chooser.addOption("#3: Timed drive and drop into L1 from middle.", Commands.sequence(
       drivetrain.resetGyroCommand(),
       angle.lowerCommand(),
