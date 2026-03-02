@@ -5,15 +5,13 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 
 public class Shooter extends SubsystemBase {
   SparkMax shooterMotor = new SparkMax(22, MotorType.kBrushless);
-
-  XboxController joystick;
+  SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
 
   public Shooter() {
     SparkMaxConfig globalConfig = new SparkMaxConfig();
@@ -22,7 +20,7 @@ public class Shooter extends SubsystemBase {
         globalConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
-  // When is this used?
+  // not used currently
   public void set(double speed) {
     shooterMotor.set(speed);
   }
@@ -37,7 +35,12 @@ public class Shooter extends SubsystemBase {
     return run(() -> set(inputSupplier.getAsDouble())).finallyDo(() -> set(0));
   }
 
-  public Command shooterCommand(double speed) {
-    return run(() -> set(speed)).finallyDo(() -> set(0));
+  public Command chargeCommand(double speed) {
+    return run(() -> shooterMotor.set(speed)).finallyDo(() -> shooterMotor.set(0));
   }
+
+  public Command shootCommand(double speed) {
+    return run(() -> feederMotor.set(speed)).finallyDo(() -> feederMotor.set(0));
+  }
+
 }

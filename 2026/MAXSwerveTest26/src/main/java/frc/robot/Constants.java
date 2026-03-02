@@ -21,7 +21,7 @@ public final class Constants {
   public static final class DriveConstants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
-    public static final double kMaxSpeedMetersPerSecond = 1;
+    public static final double kMaxSpeedMetersPerSecond = 5; // 1 is a slow speed
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
 
     // Chassis configuration
@@ -43,15 +43,18 @@ public final class Constants {
     public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 12;
-    public static final int kFrontRightDrivingCanId = 14;
-    public static final int kRearLeftDrivingCanId = 16;
-    public static final int kRearRightDrivingCanId = 18;
+     public static final int kFrontLeftTurningCanId = 13;
+    public static final int kFrontLeftDrivingCanId = 14;
 
-    public static final int kFrontLeftTurningCanId = 11;
-    public static final int kFrontRightTurningCanId = 13;
-    public static final int kRearLeftTurningCanId = 15;
-    public static final int kRearRightTurningCanId = 17;
+   public static final int kFrontRightTurningCanId = 17;
+   public static final int kFrontRightDrivingCanId = 18;
+
+   public static final int kRearLeftTurningCanId = 11;
+   public static final int kRearLeftDrivingCanId = 12;
+    
+    
+    public static final int kRearRightTurningCanId = 15;
+    public static final int kRearRightDrivingCanId = 16;
 
     public static final boolean kGyroReversed = false;
   }

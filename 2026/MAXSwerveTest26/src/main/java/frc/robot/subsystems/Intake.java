@@ -10,12 +10,12 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Feeder extends SubsystemBase {
+public class Intake extends SubsystemBase {
+  
+  SparkMax intakeMotor = new SparkMax(26, MotorType.kBrushless);
 
-  SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
-
-  /** Creates a new Feeder. */
-  public Feeder() {
+  //Creates a new Intake.
+  public Intake() {
   }
 
   @Override
@@ -23,7 +23,9 @@ public class Feeder extends SubsystemBase {
     // This method will be called once per scheduler run
   }
 
-  public Command feederCommand(double speed) {
-      return run(() -> feederMotor.set(speed));
+  public Command intakeCommand(double speed) {
+    return run(() -> intakeMotor.set(speed)).finallyDo(() -> intakeMotor.set(0));
   }
+  
 }
+

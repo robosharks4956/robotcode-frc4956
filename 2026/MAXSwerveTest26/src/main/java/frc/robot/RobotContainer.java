@@ -25,9 +25,11 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.Agitator;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Intake;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -40,7 +42,9 @@ public class RobotContainer {
   // The robot's subsystems
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final Shooter m_shooter = new Shooter();
-  private final Feeder m_feeder = new Feeder();
+  private final Agitator m_agitator = new Agitator();
+  private final Intake m_intake = new Intake();
+  //private final Arm m_arm = new Arm ();
 
   // The driver's controller
   CommandXboxController m_driverController =
@@ -73,7 +77,7 @@ public class RobotContainer {
 
     // m_shooter.setDefaultCommand(m_shooter.shooterCommand(m_supportController::getRightTriggerAxis));
   }
-
+   
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its subclasses ({@link
@@ -93,14 +97,22 @@ public class RobotContainer {
         .back()
         .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, m_robotDrive));
 
-    m_supportController.y().whileTrue(m_shooter.shooterCommand(0.65));;
-    m_supportController.b().whileTrue(m_shooter.shooterCommand(1.0));
-    m_supportController.x().whileTrue(m_shooter.shooterCommand(0.55));
-    m_supportController.a().whileTrue(m_shooter.shooterCommand(0.0));
+    m_supportController.y().whileTrue(m_shooter.chargeCommand(0.65));;
+    m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
+    m_supportController.x().whileTrue(m_shooter.chargeCommand(0.55));
 
-    m_supportController.rightBumper()
-        .onTrue(m_feeder.feederCommand(0.5))
-        .onFalse(m_feeder.feederCommand(0));
+    m_supportController.rightTrigger().whileTrue(m_shooter.shootCommand(0.5));
+    m_supportController.leftTrigger().whileTrue(m_shooter.shootCommand(-0.5));
+    
+
+    // Change feeder motor speeds to be different if needed
+    m_supportController.rightBumper().whileTrue(m_agitator.agitatorCommand(0.11));
+    m_supportController.leftBumper().whileTrue(m_intake.intakeCommand(0.5));    
+
+
+    // Arm commands
+    //m_supportController.povUp().onTrue(m_arm.upperCommand());
+    //m_supportController.povDown().onTrue(m_arm.lowerCommand());
   }
 
   /**
