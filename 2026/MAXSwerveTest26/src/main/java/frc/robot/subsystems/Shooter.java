@@ -67,4 +67,8 @@ public class Shooter extends SubsystemBase {
     return run(() -> motorClosedLoopController.setSetpoint(speed, ControlType.kVelocity, ClosedLoopSlot.fromInt(0), 12.5*speed/5500
      )).finallyDo(() -> shooterMotor.set(0));
   }
+
+  public double getSpeed() {
+    return shooterMotor.getEncoder().getVelocity();
+  }
 }
