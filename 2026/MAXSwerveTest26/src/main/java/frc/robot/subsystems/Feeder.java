@@ -5,29 +5,23 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Agitator extends SubsystemBase {
-
-  SparkFlex agitatorMotor = new SparkFlex(25, MotorType.kBrushless);
-
+public class Feeder extends SubsystemBase {
   /** Creates a new Feeder. */
-  public Agitator() {
+  public Feeder() {}
+
+  SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
+
+  public Command shootCommand(double speed) {
+    return run(() -> feederMotor.set(speed)).finallyDo(() -> feederMotor.set(0));
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
   }
-
-  public void set(double agitatorSpeed) {
-    agitatorMotor.set(agitatorSpeed);
-  }
-
-  public Command agitatorCommand(double agitatorSpeed) {
-    return run(() -> agitatorMotor.set(-agitatorSpeed)).finallyDo(() -> agitatorMotor.set(0));
-  }
-
 }

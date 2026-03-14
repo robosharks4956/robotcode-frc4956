@@ -4,30 +4,27 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Utils;
 
-public class Agitator extends SubsystemBase {
+public class Climber extends SubsystemBase {
+  SparkMax climberMotor = new SparkMax(30, MotorType.kBrushless);
 
-  SparkFlex agitatorMotor = new SparkFlex(25, MotorType.kBrushless);
+  public Climber() {
+  }
 
-  /** Creates a new Feeder. */
-  public Agitator() {
+  public Command manualControl(DoubleSupplier speedSupplier) {
+     return run(() -> climberMotor.set(Utils.modifyAxis(speedSupplier.getAsDouble() * 1, 1, 0.05, 3)));
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
   }
-
-  public void set(double agitatorSpeed) {
-    agitatorMotor.set(agitatorSpeed);
-  }
-
-  public Command agitatorCommand(double agitatorSpeed) {
-    return run(() -> agitatorMotor.set(-agitatorSpeed)).finallyDo(() -> agitatorMotor.set(0));
-  }
-
 }

@@ -19,7 +19,7 @@ public final class Configs {
       double nominalVoltage = 12.0;
       double drivingVelocityFeedForward = nominalVoltage / ModuleConstants.kDriveWheelFreeSpeedRps;
 
-      drivingConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(50);
+      drivingConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(35);
       drivingConfig
           .encoder
           .positionConversionFactor(drivingFactor) // meters
