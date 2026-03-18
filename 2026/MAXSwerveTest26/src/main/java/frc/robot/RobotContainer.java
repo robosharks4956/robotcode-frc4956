@@ -6,6 +6,8 @@ package frc.robot;
 
 import java.util.List;
 
+import org.photonvision.PhotonCamera;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -16,6 +18,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -31,10 +34,12 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.Agitator;
+import frc.robot.subsystems.AprilTagCamera;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.ShootAndFeed;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -52,6 +57,7 @@ public class RobotContainer {
     private final Arm m_arm = new Arm();
     private final Climber m_climber = new Climber();
     private final Feeder m_feeder = new Feeder();
+    private final AprilTagCamera m_camera = new AprilTagCamera();
 
     // The driver's controller
     CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
@@ -70,7 +76,7 @@ public class RobotContainer {
         SmartDashboard.putString("Message for drive team", "WE LOVE YOU DRIVE TEAM!");
         SmartDashboard.putData("Autonomous Chooser", chooser);
 
-        chooser.setDefaultOption("#1 Nothing.", new InstantCommand());
+        chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
         chooser.addOption("#2 Shoot", Commands.sequence(
                 m_arm.setSpeed(-0.5).withTimeout(0.8),
@@ -88,6 +94,8 @@ public class RobotContainer {
                         m_feeder.shootCommand(.5)).withTimeout(5)
 
         ));
+
+
 
         chooser.addOption("Trajectory test", getTrajectoryCommand());
 
@@ -137,19 +145,35 @@ public class RobotContainer {
                 .back()
                 .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, m_robotDrive));
 
-        
-        m_supportController.a().whileTrue(m_shooter.chargeCommandPID(3470));
-        m_supportController.x().whileTrue(m_shooter.chargeCommand(0.55));
-        m_supportController.y().whileTrue(m_shooter.chargeCommand(0.65));
-        m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
+        SmartDashboard.getNumber("targetPitch", 0);
 
-        m_supportController.rightTrigger().whileTrue(m_feeder.shootCommand(0.5));
+
+        // THIS IS CURRENTLY BROKEN; FOR SOME REASON, THE PITCH DEFAULTS TO ZERO
+       // m_supportController.a().whileTrue(m_shooter.chargeCommandPID(m_camera.getRPM(m_camera.currentPitch)));
+
+        // PID Style
+        m_supportController.x().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 2940, m_supportController));
+        m_supportController.y().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 3530, m_supportController));
+        m_supportController.b().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 5500, m_supportController));
+        m_supportController.povLeft().whileTrue(m_shooter.chargeCommandPID(3000));
+
+        // Separate shooter command just for testing purposes
+        m_supportController.povUp().whileTrue(m_feeder.shootCommand(0.55));
+
+        // Old Style
+        //m_supportController.x().whileTrue(m_shooter.chargeCommand(0.55));
+        //m_supportController.y().whileTrue(m_shooter.chargeCommand(0.65));
+        //m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
+        //m_supportController.rightTrigger().whileTrue(m_feeder.shootCommand(0.5));
+
         m_supportController.leftTrigger().whileTrue(m_feeder.shootCommand(-0.5));
 
         // Change feeder motor speeds to be different if needed
         m_supportController.rightBumper().whileTrue(m_agitator.agitatorCommand(0.3));
         m_supportController.leftBumper().whileTrue(m_intake.intakeCommand(1));
+        m_supportController.povDown().whileTrue(m_intake.intakeCommand(-1));
 
+ 
         // Arm commands
         // m_supportController.povUp().onTrue(m_arm.upperCommand());
         // m_supportController.povDown().onTrue(m_arm.lowerCommand());

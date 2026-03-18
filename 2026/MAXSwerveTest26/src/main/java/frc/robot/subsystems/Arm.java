@@ -49,6 +49,7 @@ public class Arm extends SubsystemBase {
   }
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("Arm Output", armMotor.getAppliedOutput());
       // motorClosedLoopController.setSetpoint(isUpper ? SmartDashboard.getNumber("Angle Upper Position", 0.225) : SmartDashboard.getNumber("Angle Lower Position", 0.1), ControlType.kPosition);
   }
     // This method will be called once per scheduler run

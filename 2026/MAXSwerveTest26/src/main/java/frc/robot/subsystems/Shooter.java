@@ -23,24 +23,29 @@ public class Shooter extends SubsystemBase {
 
 
   public Shooter() {
-    SparkMaxConfig globalConfig = new SparkMaxConfig();
-
-    motorConfig.closedLoop.pid(0, 0, 0).outputRange(-1, 1);
+    // Set voltage compensation so it always sets percent as though motor is at 12 volts, compensates for voltage drop when everything is running
+    motorConfig.voltageCompensation(12);
+    motorConfig.closedLoop.pid( 6 * 0.5 / 10000.0, 0, 0).outputRange(-1, 1);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
-    // globalConfig.inverted(true);
     shooterMotor.configure(
-        globalConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
    @Override
   public void periodic() {
+    SmartDashboard.putNumber("Shooter Output", shooterMotor.getAppliedOutput());
     SmartDashboard.putNumber("Shooter Velocity", shooterMotor.getEncoder().getVelocity());
-    //motorClosedLoopController.setSetpoint(6, ControlType.kPosition, 0, );
   }
 
   // not used currently
   public void set(double speed) {
     shooterMotor.set(speed);
+  }
+
+  public void setVelocity(double rpms) {
+    double feedForward = 12*rpms/5550;
+    //feedForward = 0;
+    motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
   }
 
   /**
@@ -60,12 +65,11 @@ public class Shooter extends SubsystemBase {
 
   // RPMS for shooter settings
   // 2940 - Low setting (0.55)
-  // 3470 - Medium (0.65)
+  // 3530 - Medium (0.65)
   // 5500 - High (1)
 
   public Command chargeCommandPID(double speed) {
-    return run(() -> motorClosedLoopController.setSetpoint(speed, ControlType.kVelocity, ClosedLoopSlot.fromInt(0), 12.5*speed/5500
-     )).finallyDo(() -> shooterMotor.set(0));
+    return run(() -> setVelocity(speed)).finallyDo(() -> shooterMotor.set(0));
   }
 
   public double getSpeed() {

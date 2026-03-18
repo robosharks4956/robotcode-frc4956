@@ -20,6 +20,10 @@ public class Feeder extends SubsystemBase {
     return run(() -> feederMotor.set(speed)).finallyDo(() -> feederMotor.set(0));
   }
 
+  public void set(double speed) {
+    feederMotor.set(speed);
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

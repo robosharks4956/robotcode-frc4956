@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class ShootAndFeed extends Command {
   private Shooter shooter;
@@ -12,34 +13,45 @@ public class ShootAndFeed extends Command {
   private double shooter_perc;
   private double feeder_perc;
   private double rpm;
+  private boolean isFeeding = false;
+  private CommandXboxController supportController;
 
-  public ShootAndFeed(Shooter shooter, Feeder feeder, double shooter_perc, double feeder_perc, double rpm) {
+  public ShootAndFeed(Shooter shooter, Feeder feeder, double feeder_perc, double rpm,
+      CommandXboxController supportController) {
     addRequirements(shooter, feeder);
     this.shooter = shooter;
     this.feeder = feeder;
-    this.shooter_perc = shooter_perc;
     this.feeder_perc = feeder_perc;
     this.rpm = rpm;
+    this.supportController = supportController;
   }
 
   @Override
   public void initialize() {
+    feeder.set(0);
   }
 
   @Override
   public void execute() {
     final double shooter_current_speed = shooter.getSpeed();
-    shooter.set(shooter_perc);
-    if (shooter_current_speed >= rpm) {
-      feeder.shootCommand(feeder_perc);
+    shooter.setVelocity(rpm);
+    if (supportController.getRightTriggerAxis() > 0.3) {
+      if (shooter_current_speed >= rpm) {
+        feeder.set(feeder_perc);
+        // Else leave feeder running until it falls below 90% of target, that way small
+        // fluctuations don't make the feeder rapidly toggle
+      } else if (shooter_current_speed < rpm * 0.9) {
+        feeder.set(0);
+      }
     } else {
-      feeder.shootCommand(0.0);
+      feeder.set(0);
     }
+
   }
 
   @Override
   public void end(boolean interrupted) {
     shooter.set(0.0);
-    feeder.shootCommand(0.0);
+    feeder.set(0.0);
   }
 }
