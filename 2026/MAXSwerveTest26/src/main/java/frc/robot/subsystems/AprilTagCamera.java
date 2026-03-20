@@ -112,7 +112,7 @@ public class AprilTagCamera extends SubsystemBase {
     // private double pitch = getPitch();
     final double h = 36.75; // in
     final double cameraAngle = 34; // deg
-    final double offset = 25 ; // in - may need further testing
+    final double offset = 25; // in - may need further testing
     final double distance = (h / (Math.tan(Math.toRadians(cameraAngle + pitch)))) + offset;
     // The Distance Above is Correct
 
