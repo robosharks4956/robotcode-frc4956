@@ -7,7 +7,7 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -17,7 +17,7 @@ import java.util.function.DoubleSupplier;
 import frc.robot.subsystems.AprilTagCamera;
 
 public class Shooter extends SubsystemBase {
-  SparkMax shooterMotor = new SparkMax(22, MotorType.kBrushless);
+  SparkFlex shooterMotor = new SparkFlex(23, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
   private final SparkClosedLoopController motorClosedLoopController = shooterMotor.getClosedLoopController();
 
@@ -25,7 +25,7 @@ public class Shooter extends SubsystemBase {
   public Shooter() {
     // Set voltage compensation so it always sets percent as though motor is at 12 volts, compensates for voltage drop when everything is running
     motorConfig.voltageCompensation(12);
-    motorConfig.closedLoop.pid( 6 * 0.5 / 10000.0, 0, 0).outputRange(-1, 1);
+    motorConfig.closedLoop.pid(6 * 0.5 / 10000.0, 0, 0).outputRange(-1, 1);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
     shooterMotor.configure(
         motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -37,14 +37,13 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("Shooter Velocity", shooterMotor.getEncoder().getVelocity());
   }
 
-  // not used currently
   public void set(double speed) {
     shooterMotor.set(speed);
   }
 
   public void setVelocity(double rpms) {
-    double feedForward = 12*rpms/5550;
-    //feedForward = 0;
+    double feedForward = 12*rpms/6472;
+    // feedForward = 0;
     motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
   }
 
@@ -70,6 +69,10 @@ public class Shooter extends SubsystemBase {
 
   public Command chargeCommandPID(double speed) {
     return run(() -> setVelocity(speed)).finallyDo(() -> shooterMotor.set(0));
+  }
+
+  public Command chargeCommandPID(DoubleSupplier inputSupplier) {
+    return run(() -> setVelocity(inputSupplier.getAsDouble())).finallyDo(() -> shooterMotor.set(0));
   }
 
   public double getSpeed() {

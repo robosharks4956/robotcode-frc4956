@@ -147,14 +147,14 @@ public class RobotContainer {
 
         SmartDashboard.getNumber("targetPitch", 0);
 
-
+        
         // THIS IS CURRENTLY BROKEN; FOR SOME REASON, THE PITCH DEFAULTS TO ZERO
-       // m_supportController.a().whileTrue(m_shooter.chargeCommandPID(m_camera.getRPM(m_camera.currentPitch)));
+        m_supportController.a().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> SmartDashboard.getNumber("targetRPM", 0), m_supportController));
 
         // PID Style
-        m_supportController.x().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 2940, m_supportController));
-        m_supportController.y().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 3530, m_supportController));
-        m_supportController.b().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, 5500, m_supportController));
+        m_supportController.x().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 2940, m_supportController));
+        m_supportController.y().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 3530, m_supportController));
+        //m_supportController.b().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 5500, m_supportController));
         m_supportController.povLeft().whileTrue(m_shooter.chargeCommandPID(3000));
 
         // Separate shooter command just for testing purposes
@@ -163,9 +163,9 @@ public class RobotContainer {
         // Old Style
         //m_supportController.x().whileTrue(m_shooter.chargeCommand(0.55));
         //m_supportController.y().whileTrue(m_shooter.chargeCommand(0.65));
-        //m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
-        //m_supportController.rightTrigger().whileTrue(m_feeder.shootCommand(0.5));
-
+        m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
+        
+       // m_supportController.rightTrigger().whileTrue(m_feeder.shootCommand(0.5));   
         m_supportController.leftTrigger().whileTrue(m_feeder.shootCommand(-0.5));
 
         // Change feeder motor speeds to be different if needed
