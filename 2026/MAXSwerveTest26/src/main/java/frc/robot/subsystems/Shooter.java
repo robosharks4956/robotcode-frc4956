@@ -47,6 +47,10 @@ public class Shooter extends SubsystemBase {
     motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
   }
 
+  public Command setVelocityCommand(double rpms) {
+    return run(() -> setVelocity(rpms)).finallyDo(() -> set(0));
+  }
+
   /**
    * Creates a command that opens and closes the tail fin using input suppliers.
    *

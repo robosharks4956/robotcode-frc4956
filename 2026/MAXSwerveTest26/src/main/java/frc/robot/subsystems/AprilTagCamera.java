@@ -118,12 +118,12 @@ public class AprilTagCamera extends SubsystemBase {
 
 
     final double g = 386.089; // in squared
-    final double shootingAngle = Math.toRadians(74); // deg, likely needs minor adjustments WAS AT 75
+    final double shootingAngle = Math.toRadians(73.5); // deg, likely needs minor adjustments WAS AT 75
     final double y = 62; // in 
     final double velocity = Math.sqrt((g * Math.pow(distance, 2)) / (distance * Math.sin(2 * shootingAngle) - y * (Math.cos(2 * shootingAngle) + 1)));
     
-    final double e = 2.5; // error multiplier, compensates if rpm is too low ... was at 2.491
+    final double e = 1.25; // error multiplier, accounts for air resistance, forward topspin, etc.
     
-    return velocity * (15 / Math.PI) * e; // rpm
+    return 2 * velocity * (15 / Math.PI) * e; // rpm
   }
 }

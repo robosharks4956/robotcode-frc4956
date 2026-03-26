@@ -82,21 +82,97 @@ public class RobotContainer {
                 m_arm.setSpeed(-0.5).withTimeout(0.8),
                 m_shooter.chargeCommand(.55).withTimeout(2),
                 Commands.parallel(
-                        m_shooter.chargeCommand(.55),
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
                         m_agitator.agitatorCommand(.3),
                         m_feeder.shootCommand(.5)).withTimeout(5),
                 Commands.parallel(
                         m_arm.setSpeed(0.5),
                         m_intake.intakeCommand(0.65)).withTimeout(0.5),
                 Commands.parallel(
-                        m_shooter.chargeCommand(.55),
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
                         m_agitator.agitatorCommand(.3),
                         m_feeder.shootCommand(.5)).withTimeout(5)
 
         ));
 
+        chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
+                m_arm.setSpeed(-0.5).withTimeout(0.8),
+                m_arm.setSpeed(0).withTimeout(5),
+                m_shooter.chargeCommand(.55).withTimeout(2),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5),
+                Commands.parallel(
+                        m_arm.setSpeed(0.5),
+                        m_intake.intakeCommand(0.65)).withTimeout(0.5),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5)
 
+        ));
 
+        chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
+                m_arm.setSpeed(-0.5).withTimeout(0.8),
+                m_shooter.chargeCommand(.55).withTimeout(2),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5),
+                Commands.parallel(
+                        m_arm.setSpeed(0.5),
+                        m_intake.intakeCommand(0.65)).withTimeout(0.5),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.setVelocityCommand(2940),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5),
+                m_robotDrive.driveCommand(0, 0, 0, fieldRelative).withTimeout(0.5),
+                Commands.parallel(
+                        m_robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
+                        m_intake.intakeCommand(1)
+                )
+        ));
+
+        chooser.addOption("TESTING PURPOSES ONLY", Commands.sequence(
+                m_robotDrive.driveCommand(-0.1, -0.2, 0.6, fieldRelative).withTimeout(0.5),
+                Commands.parallel(
+                        m_arm.setSpeed(-0.5).withTimeout(0.5),
+                        m_robotDrive.driveCommand(0, -0.1, 0, fieldRelative).withTimeout(2.5),
+                        m_intake.intakeCommand(1)
+                ).withTimeout(3),
+                m_robotDrive.driveCommand(0, 0.1, -0.3, fieldRelative).withTimeout(0.3),
+                m_shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)).withTimeout(1.5),
+                Commands.parallel(
+                        m_shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)),
+                        m_feeder.shootCommand(0.5),
+                        m_agitator.agitatorCommand(0.3)
+                        
+                )/*,
+                m_robotDrive.driveCommand(1, 0, 0, fieldRelative).withTimeout(1),
+                m_shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)).withTimeout(2),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5),
+                Commands.parallel(
+                        m_arm.setSpeed(0.5),
+                        m_intake.intakeCommand(0.65)).withTimeout(0.5),
+                Commands.parallel(
+                        //m_shooter.chargeCommand(.55),
+                        m_shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)),
+                        m_agitator.agitatorCommand(.3),
+                        m_feeder.shootCommand(.5)).withTimeout(5)
+                */
+        ));
+   
         chooser.addOption("Trajectory test", getTrajectoryCommand());
 
         // Configure the button bindings
@@ -154,7 +230,7 @@ public class RobotContainer {
         // PID Style
         m_supportController.x().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 2940, m_supportController));
         m_supportController.y().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 3530, m_supportController));
-        //m_supportController.b().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 5500, m_supportController));
+        m_supportController.b().whileTrue(new ShootAndFeed(m_shooter, m_feeder, 0.5, () -> 5500, m_supportController));
         m_supportController.povLeft().whileTrue(m_shooter.chargeCommandPID(3000));
 
         // Separate shooter command just for testing purposes
@@ -163,7 +239,7 @@ public class RobotContainer {
         // Old Style
         //m_supportController.x().whileTrue(m_shooter.chargeCommand(0.55));
         //m_supportController.y().whileTrue(m_shooter.chargeCommand(0.65));
-        m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
+        //m_supportController.b().whileTrue(m_shooter.chargeCommand(1.0));
         
        // m_supportController.rightTrigger().whileTrue(m_feeder.shootCommand(0.5));   
         m_supportController.leftTrigger().whileTrue(m_feeder.shootCommand(-0.5));
