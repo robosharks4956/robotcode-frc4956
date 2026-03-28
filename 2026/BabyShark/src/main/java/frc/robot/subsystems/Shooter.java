@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
@@ -10,31 +11,37 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
-import frc.robot.subsystems.AprilTagCamera;
 
 public class Shooter extends SubsystemBase {
   SparkFlex shooterMotor = new SparkFlex(23, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
   private final SparkClosedLoopController motorClosedLoopController = shooterMotor.getClosedLoopController();
-
+  RelativeEncoder shooterEncoder;
 
   public Shooter() {
-    // Set voltage compensation so it always sets percent as though motor is at 12 volts, compensates for voltage drop when everything is running
+    // Set voltage compensation so it always sets percent as though motor is at 12
+    // volts, compensates for voltage drop when everything is running
     motorConfig.voltageCompensation(12);
     motorConfig.closedLoop.pid(6 * 0.5 / 10000.0, 0, 0).outputRange(-1, 1);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
     shooterMotor.configure(
         motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    shooterEncoder = shooterMotor.getEncoder();
   }
 
-   @Override
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Shooter Velocity", shooterEncoder::getVelocity, null);
+    builder.addDoubleProperty("Shooter Output", shooterMotor::getAppliedOutput, null);
+  }
+
+  @Override
   public void periodic() {
-    SmartDashboard.putNumber("Shooter Output", shooterMotor.getAppliedOutput());
-    SmartDashboard.putNumber("Shooter Velocity", shooterMotor.getEncoder().getVelocity());
   }
 
   public void set(double speed) {
@@ -42,7 +49,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void setVelocity(double rpms) {
-    double feedForward = 12*rpms/6472;
+    double feedForward = 12 * rpms / 6472;
     // feedForward = 0;
     motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
   }
@@ -62,7 +69,6 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command chargeCommand(double speed) {
-  
     return run(() -> shooterMotor.set(speed)).finallyDo(() -> shooterMotor.set(0));
   }
 

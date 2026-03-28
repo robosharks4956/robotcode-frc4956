@@ -10,6 +10,7 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -17,7 +18,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils;
@@ -33,37 +34,42 @@ public class Arm extends SubsystemBase {
   private double lowerPosition = 0;
   private double targetPosition = upperPosition;
 
-  /** Creates a new Angle. */
+  private SparkAbsoluteEncoder m_encoder;
+
   public Arm() {
 
-    // SmartDashboard.putD("Arm Motor", armMotor::get);
     motorConfig.inverted(false).idleMode(IdleMode.kBrake).closedLoopRampRate(0.1);
     motorConfig.closedLoop.pid(0.5 / upperPosition, 0, 0).outputRange(-0.03, 0.05);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder).positionWrappingEnabled(true);
-
     armMotor.configure(motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
+    m_encoder = armMotor.getAbsoluteEncoder();
+  }
+
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Position", m_encoder::getPosition, null);
+    builder.addDoubleProperty("Applied Output", armMotor::getAppliedOutput, null);
+
+    // Allows setting arm position setpoints from dashboard
+    builder.addDoubleProperty("Upper Position", () -> upperPosition, (value) -> upperPosition = value);
+    builder.addDoubleProperty("Lower Position", () -> lowerPosition, (value) -> upperPosition = value);
   }
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Arm Output", armMotor.getAppliedOutput());
     // motorClosedLoopController.setSetpoint(isUpper ?
     // SmartDashboard.getNumber("Angle Upper Position", 0.225) :
     // SmartDashboard.getNumber("Angle Lower Position", 0.1),
     // ControlType.kPosition);
   }
-  // This method will be called once per scheduler run
 
   /**
    * Creates a command that moves the coral manipulator to the upper position.
    * 
    * @return The command that moves the coral manipulator to the upper position.
    */
-
-  // Upper Position: 246.5
-  // Lower Position: 0
-
   public Command upperCommand() {
     return runOnce(() -> isUpper = true);
   }
@@ -77,11 +83,20 @@ public class Arm extends SubsystemBase {
     return runOnce(() -> isUpper = false);
   }
 
-  public Command manualControl(DoubleSupplier speedSupplier) {
+  /**
+   * Set speed from double supplier. Meant to be used with joystick controller input, smooths the input.
+   * @param speedSupplier Joystick axis.
+   * @return The command that will set speed to joystick input.
+   */
+  public Command setSpeed(DoubleSupplier speedSupplier) {
     return run(() -> {
       armMotor.set(Utils.modifyAxis(speedSupplier.getAsDouble() * 1, 1, 0.05, 3));
-      // System.out.println("Arm Input: " + speedSupplier.getAsDouble());
     });
+  }
+
+  /** Sets speed to a constant value. Sets speed to zero when command finishes. */
+  public Command setSpeed(double speed) {
+    return run(() -> armMotor.set(-speed)).finallyDo(() -> armMotor.set(0));
   }
 
   public Command manualControlPID(DoubleSupplier speedSupplier) {
@@ -89,9 +104,5 @@ public class Arm extends SubsystemBase {
       targetPosition += speedSupplier.getAsDouble();
       motorClosedLoopController.setSetpoint(targetPosition, ControlType.kPosition, ClosedLoopSlot.fromInt(0), 0);
     }).finallyDo(() -> armMotor.set(0));
-  }
-
-  public Command setSpeed(double speed) {
-    return run(() -> armMotor.set(-speed)).finallyDo(() -> armMotor.set(0));
   }
 }

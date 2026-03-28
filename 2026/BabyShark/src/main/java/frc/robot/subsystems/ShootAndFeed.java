@@ -4,28 +4,30 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class ShootAndFeed extends Command {
+
   private Shooter shooter;
   private Feeder feeder;
-  private double shooter_perc;
   private double feeder_perc;
   private DoubleSupplier rpm_supplier;
-  private boolean isFeeding = false;
-  private CommandXboxController supportController;
+
+  // Will not run the feeder until this is true, gives operator a way to hold off shooting until robot is in position
+  // In auton, just set to true all the time so it fires when RPM target is reached
+  private BooleanSupplier safetySwitch;
 
   public ShootAndFeed(Shooter shooter, Feeder feeder, double feeder_perc, DoubleSupplier rpm_supplier,
-      CommandXboxController supportController) {
+      BooleanSupplier safetySwitch) {
     addRequirements(shooter, feeder);
     this.shooter = shooter;
     this.feeder = feeder;
     this.feeder_perc = feeder_perc;
     this.rpm_supplier = rpm_supplier;
-    this.supportController = supportController;
+    this.safetySwitch = safetySwitch;
   }
 
   @Override
@@ -38,7 +40,7 @@ public class ShootAndFeed extends Command {
     final double shooter_current_speed = shooter.getSpeed();
     double rpm = rpm_supplier.getAsDouble();
     shooter.setVelocity(rpm);
-    if (supportController.getRightTriggerAxis() > 0.3) {
+    if (safetySwitch.getAsBoolean()) {
       if (shooter_current_speed >= rpm) {
         feeder.set(feeder_perc);
         // Else leave feeder running until it falls below 90% of target, that way small
@@ -49,7 +51,6 @@ public class ShootAndFeed extends Command {
     } else {
       feeder.set(0);
     }
-
   }
 
   @Override

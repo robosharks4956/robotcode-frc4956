@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkFlex;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +26,4 @@ public class Intake extends SubsystemBase {
   public Command intakeCommand(double speed) {
     return run(() -> intakeMotor.set(speed)).finallyDo(() -> intakeMotor.set(0));
   }
-  
 }
-

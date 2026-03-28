@@ -14,12 +14,12 @@ import java.util.List;
  
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class AprilTagCamera extends SubsystemBase {
-  /** Creates a new Vision. */
-  
+
   private PhotonCamera camera = new PhotonCamera("SquareCamera");
+
+  // TODO: Update these with the camera's position on the robot
   public static final Transform3d kRobotToCam = new Transform3d(new Translation3d(0.0254, 0.0381, 0.6985),
       new Rotation3d(0, 0, 0));
   public static final Transform3d kCameraToRobot = new Transform3d(new Translation3d(-0.0254, -0.0381, -0.6985),

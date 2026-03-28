@@ -11,6 +11,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Feeder extends SubsystemBase {
+
+  public static final double kFeedSpeed = 0.5;
+
   /** Creates a new Feeder. */
   public Feeder() {}
 
