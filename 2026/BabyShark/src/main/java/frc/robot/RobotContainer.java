@@ -7,6 +7,7 @@ package frc.robot;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
+import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -56,6 +57,7 @@ public class RobotContainer {
     private final Climber climber = new Climber();
     private final Feeder feeder = new Feeder();
     private final AprilTagCamera camera = new AprilTagCamera();
+    private final AutoFactory autoFactory;
 
     CommandXboxController driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
     CommandXboxController supportController = new CommandXboxController(OIConstants.kSupportControllerPort);
@@ -68,9 +70,17 @@ public class RobotContainer {
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer() {
+         autoFactory = new AutoFactory(
+            robotDrive::getPose, // A function that returns the current robot pose
+            robotDrive::resetOdometry, // A function that resets the current robot pose to the provided Pose2d
+            robotDrive::followTrajectory, // The drive subsystem trajectory follower 
+            true, // If alliance flipping should be enabled 
+            robotDrive // The drive subsystem
+        );
 
         SmartDashboard.putData("Arm", arm);
         SmartDashboard.putData("Shooter", shooter);
+        SmartDashboard.putData("Drivetrain", robotDrive);
 
         // Populate auton choices on dashboard
         SmartDashboard.putString("Message for drive team", "WE LOVE YOU DRIVE TEAM!");
@@ -97,7 +107,7 @@ public class RobotContainer {
                 shootCommand
         ));
 
-        chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
+        /*chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
                 arm.setSpeed(0).withTimeout(5), // 5s delay to start
                 shootCommand
         ));
@@ -109,7 +119,7 @@ public class RobotContainer {
                         robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
                         intake.intakeCommand(1)
                 )
-        ));
+        ));/* */
 
         chooser.addOption("TESTING PURPOSES ONLY", Commands.sequence(
                 robotDrive.driveCommand(-0.1, -0.2, 0.6, fieldRelative).withTimeout(0.5),
@@ -128,6 +138,8 @@ public class RobotContainer {
         ));
    
         chooser.addOption("Trajectory test", getTrajectoryCommand());
+        Command shooterTrajectory = autoFactory.trajectoryCmd("Shooter");
+        chooser.addOption("ChoreoShooter", shooterTrajectory);
 
         // Configure the button bindings
         configureButtonBindings();
@@ -141,10 +153,10 @@ public class RobotContainer {
                 // Turning is controlled by the X axis of the right stick.
                 new RunCommand(
                         () -> robotDrive.drive(
-                                -MathUtil.applyDeadband(
-                                        -driverController.getLeftY(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(
-                                        -driverController.getLeftX(), OIConstants.kDriveDeadband),
+                                MathUtil.applyDeadband(
+                                        driverController.getLeftY(), OIConstants.kDriveDeadband),
+                                MathUtil.applyDeadband(
+                                        driverController.getLeftX(), OIConstants.kDriveDeadband),
                                 -MathUtil.applyDeadband(
                                         driverController.getRightX(), OIConstants.kDriveDeadband),
                                 fieldRelative),
@@ -221,9 +233,9 @@ public class RobotContainer {
           // Start at the origin facing the +X direction
           new Pose2d(0, 0, new Rotation2d(0)),
           // Pass through these two interior waypoints, making an 's' curve path
-          List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+          List.of(new Translation2d(0.5, 0.5), new Translation2d(1, -0.5)),
           // End 3 meters straight ahead of where we started, facing forward
-          new Pose2d(3, 0, new Rotation2d(0)),
+          new Pose2d(1.5, 0, new Rotation2d(-Math.PI/2)),
           config);
           
           var thetaController =

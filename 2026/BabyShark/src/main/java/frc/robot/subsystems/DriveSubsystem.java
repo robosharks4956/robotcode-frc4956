@@ -6,9 +6,13 @@ package frc.robot.subsystems;
 
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
+
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -21,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -48,7 +53,12 @@ public class DriveSubsystem extends SubsystemBase {
           DriveConstants.kRearRightDrivingCanId,
           DriveConstants.kRearRightTurningCanId,
           DriveConstants.kBackRightChassisAngularOffset);
-
+          PIDController yController =  new PIDController(AutoConstants.kPYController, 0, 0);
+          PIDController xController =  new PIDController(AutoConstants.kPXController, 0, 0);
+          ProfiledPIDController headingController =  new ProfiledPIDController(
+          AutoConstants.kPThetaController, 0, 0,
+          AutoConstants.kThetaControllerConstraints);
+          
   // Field map used to send current robot pose to a field diagram on the dashboard
   public final Field2d field = new Field2d();
 
@@ -80,12 +90,15 @@ public class DriveSubsystem extends SubsystemBase {
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
     SmartDashboard.putData("field", field);
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
+
   }
 
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
     builder.addDoubleProperty("FL Distance meters", () -> m_frontLeft.getPosition().distanceMeters, null);
+    builder.addDoubleProperty("Gyro", this::getGyroAngle, null);
   }
 
   @Override
@@ -157,6 +170,18 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearLeft.setDesiredState(swerveModuleStates[2]);
     m_rearRight.setDesiredState(swerveModuleStates[3]);
   }
+  public void driveFieldRelative(ChassisSpeeds speeds){
+    var swerveModuleStates =
+        DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
+         SwerveDriveKinematics.desaturateWheelSpeeds(
+        swerveModuleStates, AutoConstants.kMaxSpeedMetersPerSecond);
+    m_frontLeft.setDesiredState(swerveModuleStates[0]);
+    m_frontRight.setDesiredState(swerveModuleStates[1]);
+    m_rearLeft.setDesiredState(swerveModuleStates[2]);
+    m_rearRight.setDesiredState(swerveModuleStates[3]);
+
+  }
+  
 
   public Command driveCommand(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     return run(() -> drive(xSpeed, ySpeed, rot, fieldRelative));
@@ -218,4 +243,19 @@ public class DriveSubsystem extends SubsystemBase {
   public void stop() {
      drive(0, 0, 0, false);
   }
+  public void followTrajectory(SwerveSample sample) {
+        // Get the current pose of the robot
+        Pose2d pose = getPose();
+
+        // Generate the next speeds for the robot
+        ChassisSpeeds speeds = new ChassisSpeeds(
+            sample.vx + xController.calculate(pose.getX(), sample.x),
+            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+        );
+
+        // Apply the generated speeds
+        driveFieldRelative(speeds);
+    }
+
 }

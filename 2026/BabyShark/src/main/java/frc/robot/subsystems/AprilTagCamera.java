@@ -48,7 +48,7 @@ public class AprilTagCamera extends SubsystemBase {
       }
     }
 
-    SmartDashboard.putNumber("targetRPM", getRPM(currentPitch));
+    SmartDashboard.putNumber("targetRPM", getRPMWithAirResistance(currentPitch));
 
   }
 
@@ -125,5 +125,27 @@ public class AprilTagCamera extends SubsystemBase {
     final double e = 1.25; // error multiplier, accounts for air resistance, forward topspin, etc.
     
     return 2 * velocity * (15 / Math.PI) * e; // rpm
+  }
+
+  public double getRPMWithAirResistance(double pitch) {
+    final double h = 36.75; // in
+    final double cameraAngle = 34; // deg
+    final double offset = 25; // in - may need further testing
+    final double distance = (h / (Math.tan(Math.toRadians(cameraAngle + pitch)))) + offset;
+    final double g = 386.089; // in squared
+    final double shootingAngle = Math.toRadians(73.5); // deg, likely needs minor adjustments WAS AT 75
+    final double y = 62; // in 
+    final double mu = 0.1;
+    byte step = 0;
+
+    double velocity = Math.sqrt((g * Math.pow(distance, 2)) / (distance * Math.sin(2 * shootingAngle) - y * (Math.cos(2 * shootingAngle) + 1)));
+
+    while(step < 6) {
+      velocity = velocity - (Math.pow(velocity, 3)*Math.pow(Math.cos(shootingAngle), 2) - Math.pow(velocity, 2)*mu*distance*Math.cos(shootingAngle))*((distance*Math.tan(shootingAngle) - y)/(g*(distance*distance)) + 1/(mu*distance*velocity*Math.cos(shootingAngle)) + Math.log(1 - mu*distance/(velocity*Math.cos(shootingAngle)))/(mu*mu*distance*distance));
+      step += 1;
+    }
+
+
+    return 30*velocity/Math.PI;
   }
 }
