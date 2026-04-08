@@ -29,36 +29,34 @@ import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
+
   // Create MAXSwerveModules
-  private final MAXSwerveModule m_frontLeft =
-      new MAXSwerveModule(
-          DriveConstants.kFrontLeftDrivingCanId,
-          DriveConstants.kFrontLeftTurningCanId,
-          DriveConstants.kFrontLeftChassisAngularOffset);
+  private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
+      DriveConstants.kFrontLeftDrivingCanId,
+      DriveConstants.kFrontLeftTurningCanId,
+      DriveConstants.kFrontLeftChassisAngularOffset);
 
-  private final MAXSwerveModule m_frontRight =
-      new MAXSwerveModule(
-          DriveConstants.kFrontRightDrivingCanId,
-          DriveConstants.kFrontRightTurningCanId,
-          DriveConstants.kFrontRightChassisAngularOffset);
+  private final MAXSwerveModule m_frontRight = new MAXSwerveModule(
+      DriveConstants.kFrontRightDrivingCanId,
+      DriveConstants.kFrontRightTurningCanId,
+      DriveConstants.kFrontRightChassisAngularOffset);
 
-  private final MAXSwerveModule m_rearLeft =
-      new MAXSwerveModule(
-          DriveConstants.kRearLeftDrivingCanId,
-          DriveConstants.kRearLeftTurningCanId,
-          DriveConstants.kBackLeftChassisAngularOffset);
+  private final MAXSwerveModule m_rearLeft = new MAXSwerveModule(
+      DriveConstants.kRearLeftDrivingCanId,
+      DriveConstants.kRearLeftTurningCanId,
+      DriveConstants.kBackLeftChassisAngularOffset);
 
-  private final MAXSwerveModule m_rearRight =
-      new MAXSwerveModule(
-          DriveConstants.kRearRightDrivingCanId,
-          DriveConstants.kRearRightTurningCanId,
-          DriveConstants.kBackRightChassisAngularOffset);
-          PIDController yController =  new PIDController(AutoConstants.kPYController, 0, 0);
-          PIDController xController =  new PIDController(AutoConstants.kPXController, 0, 0);
-          ProfiledPIDController headingController =  new ProfiledPIDController(
-          AutoConstants.kPThetaController, 0, 0,
-          AutoConstants.kThetaControllerConstraints);
-          
+  private final MAXSwerveModule m_rearRight = new MAXSwerveModule(
+      DriveConstants.kRearRightDrivingCanId,
+      DriveConstants.kRearRightTurningCanId,
+      DriveConstants.kBackRightChassisAngularOffset);
+
+  PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
+  PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
+  ProfiledPIDController headingController = new ProfiledPIDController(
+      AutoConstants.kPThetaController, 0, 0,
+      AutoConstants.kThetaControllerConstraints);
+
   // Field map used to send current robot pose to a field diagram on the dashboard
   public final Field2d field = new Field2d();
 
@@ -74,24 +72,23 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   // Odometry class for tracking robot pose
-  SwerveDriveOdometry m_odometry =
-      new SwerveDriveOdometry(
-          DriveConstants.kDriveKinematics,
-          getGyroscopeRotation(),
-          new SwerveModulePosition[] {
-            m_frontLeft.getPosition(),
-            m_frontRight.getPosition(),
-            m_rearLeft.getPosition(),
-            m_rearRight.getPosition()
-          });
+  SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
+      DriveConstants.kDriveKinematics,
+      getGyroscopeRotation(),
+      new SwerveModulePosition[] {
+          m_frontLeft.getPosition(),
+          m_frontRight.getPosition(),
+          m_rearLeft.getPosition(),
+          m_rearRight.getPosition()
+      });
 
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
     SmartDashboard.putData("field", field);
-    headingController.enableContinuousInput(-Math.PI, Math.PI);
 
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   @Override
@@ -107,10 +104,10 @@ public class DriveSubsystem extends SubsystemBase {
     m_odometry.update(
         getGyroscopeRotation(),
         new SwerveModulePosition[] {
-          m_frontLeft.getPosition(),
-          m_frontRight.getPosition(),
-          m_rearLeft.getPosition(),
-          m_rearRight.getPosition()
+            m_frontLeft.getPosition(),
+            m_frontRight.getPosition(),
+            m_rearLeft.getPosition(),
+            m_rearRight.getPosition()
         });
 
     // Send robot pose to dashboard
@@ -135,10 +132,10 @@ public class DriveSubsystem extends SubsystemBase {
     m_odometry.resetPosition(
         getGyroscopeRotation(),
         new SwerveModulePosition[] {
-          m_frontLeft.getPosition(),
-          m_frontRight.getPosition(),
-          m_rearLeft.getPosition(),
-          m_rearRight.getPosition()
+            m_frontLeft.getPosition(),
+            m_frontRight.getPosition(),
+            m_rearLeft.getPosition(),
+            m_rearRight.getPosition()
         },
         pose);
   }
@@ -146,10 +143,11 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * Method to drive the robot using joystick info.
    *
-   * @param xSpeed Speed of the robot in the x direction (forward).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
+   * @param xSpeed        Speed of the robot in the x direction (forward).
+   * @param ySpeed        Speed of the robot in the y direction (sideways).
+   * @param rot           Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative to the
+   *                      field.
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     // Convert the commanded speeds into the correct units for the drivetrain
@@ -157,12 +155,11 @@ public class DriveSubsystem extends SubsystemBase {
     double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
     double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
-    var swerveModuleStates =
-        DriveConstants.kDriveKinematics.toSwerveModuleStates(
-            fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                    xSpeedDelivered, ySpeedDelivered, rotDelivered, getGyroscopeRotation())
-                : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
+    var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
+        fieldRelative
+            ? ChassisSpeeds.fromFieldRelativeSpeeds(
+                xSpeedDelivered, ySpeedDelivered, rotDelivered, getGyroscopeRotation())
+            : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
     SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
     m_frontLeft.setDesiredState(swerveModuleStates[0]);
@@ -170,10 +167,10 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearLeft.setDesiredState(swerveModuleStates[2]);
     m_rearRight.setDesiredState(swerveModuleStates[3]);
   }
-  public void driveFieldRelative(ChassisSpeeds speeds){
-    var swerveModuleStates =
-        DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
-         SwerveDriveKinematics.desaturateWheelSpeeds(
+
+  public void driveFieldRelative(ChassisSpeeds speeds) {
+    var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, AutoConstants.kMaxSpeedMetersPerSecond);
     m_frontLeft.setDesiredState(swerveModuleStates[0]);
     m_frontRight.setDesiredState(swerveModuleStates[1]);
@@ -181,7 +178,6 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearRight.setDesiredState(swerveModuleStates[3]);
 
   }
-  
 
   public Command driveCommand(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     return run(() -> drive(xSpeed, ySpeed, rot, fieldRelative));
@@ -241,21 +237,20 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void stop() {
-     drive(0, 0, 0, false);
+    drive(0, 0, 0, false);
   }
+
   public void followTrajectory(SwerveSample sample) {
-        // Get the current pose of the robot
-        Pose2d pose = getPose();
+    // Get the current pose of the robot
+    Pose2d pose = getPose();
 
-        // Generate the next speeds for the robot
-        ChassisSpeeds speeds = new ChassisSpeeds(
-            sample.vx + xController.calculate(pose.getX(), sample.x),
-            sample.vy + yController.calculate(pose.getY(), sample.y),
-            sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading)
-        );
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds = new ChassisSpeeds(
+        sample.vx + xController.calculate(pose.getX(), sample.x),
+        sample.vy + yController.calculate(pose.getY(), sample.y),
+        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
 
-        // Apply the generated speeds
-        driveFieldRelative(speeds);
-    }
-
+    // Apply the generated speeds
+    driveFieldRelative(speeds);
+  }
 }
