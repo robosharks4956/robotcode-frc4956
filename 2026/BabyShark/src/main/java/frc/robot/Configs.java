@@ -27,8 +27,8 @@ public final class Configs {
       drivingConfig
           .closedLoop
           .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-          // These are example gains you may need to them for your own robot!
-          .pid(0.04, 0, 0)
+          // These are example gains you may need to tune them for your own robot!
+          .pid(0.04, 0, 0)  // TODO: See if we need to increase this to make the robot more responsive
           .outputRange(-1, 1)
           .feedForward
           .kV(drivingVelocityFeedForward);
@@ -43,7 +43,8 @@ public final class Configs {
           .positionConversionFactor(turningFactor) // radians
           .velocityConversionFactor(turningFactor / 60.0) // radians per second
           // This applies to REV Through Bore Encoder V2 (use REV_ThroughBoreEncoder for V1):
-          .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
+          .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2); 
+          // TODO: Pretty sure we have the V1, that is what comes in the kit according to the website, so should be the V1 here, but it's been working so far so not sure it matters?
 
       turningConfig
           .closedLoop
