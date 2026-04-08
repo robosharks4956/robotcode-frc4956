@@ -70,6 +70,13 @@ public class RobotContainer {
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer() {
+
+        // Send subsystem data to dashboard
+        SmartDashboard.putData("Arm", arm);
+        SmartDashboard.putData("Shooter", shooter);
+        SmartDashboard.putData("Drivetrain", robotDrive);
+
+        // Setup Choreo AutoFactory
          autoFactory = new AutoFactory(
             robotDrive::getPose, // A function that returns the current robot pose
             robotDrive::resetOdometry, // A function that resets the current robot pose to the provided Pose2d
@@ -78,9 +85,6 @@ public class RobotContainer {
             robotDrive // The drive subsystem
         );
 
-        SmartDashboard.putData("Arm", arm);
-        SmartDashboard.putData("Shooter", shooter);
-        SmartDashboard.putData("Drivetrain", robotDrive);
 
         // Populate auton choices on dashboard
         SmartDashboard.putString("Message for drive team", "WE LOVE YOU DRIVE TEAM!");
@@ -88,38 +92,23 @@ public class RobotContainer {
 
         chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
-        // Main command to shoot the pre-loaded balls, used by a few auton modes
-        var shootCommand = Commands.sequence(
-                arm.setSpeed(-0.5).withTimeout(0.8),
-                shooter.setVelocityCommand(2940).withTimeout(1),
-                Commands.parallel(
-                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
-                        agitator.agitatorCommand(.3)).withTimeout(4),
-                Commands.parallel(
-                        arm.setSpeed(0.5),
-                        intake.intakeCommand(0.65)).withTimeout(0.5),
-                Commands.parallel(
-                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
-                        agitator.agitatorCommand(.3)).withTimeout(5)
-        );
+        // Shoot pre-loaded balls immediately
+        chooser.addOption("#2 Shoot", shootCommand());
 
-        chooser.addOption("#2 Shoot", Commands.sequence(
-                shootCommand
-        ));
-
-        /*chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
+        // Wait 5 seconds then shoot all pre-loaded balls
+        chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
                 arm.setSpeed(0).withTimeout(5), // 5s delay to start
-                shootCommand
+                shootCommand()
         ));
 
         chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
-                shootCommand,
+                shootCommand(),
                 robotDrive.driveCommand(0, 0, 0, fieldRelative).withTimeout(0.5),
                 Commands.parallel(
                         robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
                         intake.intakeCommand(1)
                 )
-        ));/* */
+        ));
 
         chooser.addOption("TESTING PURPOSES ONLY", Commands.sequence(
                 robotDrive.driveCommand(-0.1, -0.2, 0.6, fieldRelative).withTimeout(0.5),
@@ -144,9 +133,6 @@ public class RobotContainer {
         // Configure the button bindings
         configureButtonBindings();
 
-        arm.setDefaultCommand(arm.setSpeed(supportController::getLeftY));
-        climber.setDefaultCommand(climber.manualControl(supportController::getRightY));
-
         // Configure default commands
         robotDrive.setDefaultCommand(
                 // The left stick controls translation of the robot.
@@ -161,6 +147,28 @@ public class RobotContainer {
                                         driverController.getRightX(), OIConstants.kDriveDeadband),
                                 fieldRelative),
                         robotDrive));
+
+        arm.setDefaultCommand(arm.setSpeed(supportController::getLeftY));
+        climber.setDefaultCommand(climber.manualControl(supportController::getRightY));
+    }
+
+    /**
+     * Get command to shoot the pre-loaded balls, used by a few auton modes.
+     */
+    public Command shootCommand() {
+        return Commands.sequence(
+                arm.setSpeed(-0.5).withTimeout(0.8),
+                shooter.setVelocityCommand(2940).withTimeout(1),
+                Commands.parallel(
+                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
+                        agitator.agitatorCommand(.3)).withTimeout(4),
+                Commands.parallel(
+                        arm.setSpeed(0.5),
+                        intake.intakeCommand(0.65)).withTimeout(0.5),
+                Commands.parallel(
+                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
+                        agitator.agitatorCommand(.3)).withTimeout(5)
+        );
     }
 
     /**
