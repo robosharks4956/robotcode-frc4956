@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -11,11 +7,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
-  
+
   SparkFlex intakeMotor = new SparkFlex(26, MotorType.kBrushless);
 
-  //Creates a new Intake.
+  // Creates a new Intake.
   public Intake() {
+    // TODO: Add voltage compensation like in Shooter subsystem
   }
 
   @Override
@@ -23,7 +20,7 @@ public class Intake extends SubsystemBase {
     // This method will be called once per scheduler run
   }
 
-  public Command intakeCommand(double speed) {
+  public Command intakeCmd(double speed) {
     return run(() -> intakeMotor.set(speed)).finallyDo(() -> intakeMotor.set(0));
   }
 }

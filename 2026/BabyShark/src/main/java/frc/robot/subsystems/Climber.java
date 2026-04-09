@@ -14,17 +14,17 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils;
 
 public class Climber extends SubsystemBase {
+
   SparkMax climberMotor = new SparkMax(30, MotorType.kBrushless);
 
   public Climber() {
   }
 
-  public Command manualControl(DoubleSupplier speedSupplier) {
+  public Command setSpeedCmd(DoubleSupplier speedSupplier) {
      return run(() -> climberMotor.set(Utils.modifyAxis(speedSupplier.getAsDouble() * 1, 1, 0.05, 3)));
   }
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
   }
 }

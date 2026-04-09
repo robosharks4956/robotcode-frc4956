@@ -29,27 +29,28 @@ public class Arm extends SubsystemBase {
 
   private final SparkClosedLoopController motorClosedLoopController = armMotor.getClosedLoopController();
 
-  private boolean isUpper = false;
   private double upperPosition = 246.5;
   private double lowerPosition = 0;
   private double targetPosition = upperPosition;
 
-  private SparkAbsoluteEncoder m_encoder;
+  private SparkAbsoluteEncoder encoder;
 
   public Arm() {
+
+    // TODO: Add voltage compensation like in Shooter subsystem
 
     motorConfig.inverted(false).idleMode(IdleMode.kBrake).closedLoopRampRate(0.1);
     motorConfig.closedLoop.pid(0.5 / upperPosition, 0, 0).outputRange(-0.03, 0.05);
     motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder).positionWrappingEnabled(true);
     armMotor.configure(motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
-    m_encoder = armMotor.getAbsoluteEncoder();
+    encoder = armMotor.getAbsoluteEncoder();
   }
 
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("Position", m_encoder::getPosition, null);
+    builder.addDoubleProperty("Position", encoder::getPosition, null);
     builder.addDoubleProperty("Applied Output", armMotor::getAppliedOutput, null);
 
     // Allows setting arm position setpoints from dashboard
@@ -59,28 +60,6 @@ public class Arm extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // motorClosedLoopController.setSetpoint(isUpper ?
-    // SmartDashboard.getNumber("Angle Upper Position", 0.225) :
-    // SmartDashboard.getNumber("Angle Lower Position", 0.1),
-    // ControlType.kPosition);
-  }
-
-  /**
-   * Creates a command that moves the coral manipulator to the upper position.
-   * 
-   * @return The command that moves the coral manipulator to the upper position.
-   */
-  public Command upperCommand() {
-    return runOnce(() -> isUpper = true);
-  }
-
-  /**
-   * Creates a command that moves the coral manipulator to the lower position.
-   * 
-   * @return The command that moves the coral manipulator to the lower position.
-   */
-  public Command lowerCommand() {
-    return runOnce(() -> isUpper = false);
   }
 
   /**
@@ -88,14 +67,14 @@ public class Arm extends SubsystemBase {
    * @param speedSupplier Joystick axis.
    * @return The command that will set speed to joystick input.
    */
-  public Command setSpeed(DoubleSupplier speedSupplier) {
+  public Command setSpeedCmd(DoubleSupplier speedSupplier) {
     return run(() -> {
       armMotor.set(Utils.modifyAxis(speedSupplier.getAsDouble() * 1, 1, 0.05, 3));
     });
   }
 
   /** Sets speed to a constant value. Sets speed to zero when command finishes. */
-  public Command setSpeed(double speed) {
+  public Command setSpeedCmd(double speed) {
     return run(() -> armMotor.set(-speed)).finallyDo(() -> armMotor.set(0));
   }
 

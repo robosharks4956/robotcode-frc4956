@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
@@ -13,19 +9,19 @@ public class ShootAndFeed extends Command {
 
   private Shooter shooter;
   private Feeder feeder;
-  private double feeder_perc;
   private DoubleSupplier rpm_supplier;
 
-  // Will not run the feeder until this is true, gives operator a way to hold off shooting until robot is in position
-  // In auton, just set to true all the time so it fires when RPM target is reached
+  // Will not run the feeder until this is true, gives operator a way to hold off
+  // shooting until robot is in position
+  // In auton, just set to true all the time so it fires when RPM target is
+  // reached
   private BooleanSupplier safetySwitch;
 
-  public ShootAndFeed(Shooter shooter, Feeder feeder, double feeder_perc, DoubleSupplier rpm_supplier,
+  public ShootAndFeed(Shooter shooter, Feeder feeder, DoubleSupplier rpm_supplier,
       BooleanSupplier safetySwitch) {
     addRequirements(shooter, feeder);
     this.shooter = shooter;
     this.feeder = feeder;
-    this.feeder_perc = feeder_perc;
     this.rpm_supplier = rpm_supplier;
     this.safetySwitch = safetySwitch;
   }
@@ -37,12 +33,12 @@ public class ShootAndFeed extends Command {
 
   @Override
   public void execute() {
-    final double shooter_current_speed = shooter.getSpeed();
+    final double shooter_current_speed = shooter.getVelocity();
     double rpm = rpm_supplier.getAsDouble();
     shooter.setVelocity(rpm);
     if (safetySwitch.getAsBoolean()) {
       if (shooter_current_speed >= rpm) {
-        feeder.set(feeder_perc);
+        feeder.set(Feeder.kFeedSpeed);
         // Else leave feeder running until it falls below 90% of target, that way small
         // fluctuations don't make the feeder rapidly toggle
       } else if (shooter_current_speed < rpm * 0.965) {

@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import java.util.List;
@@ -41,235 +37,234 @@ import frc.robot.subsystems.ShootAndFeed;
 import frc.robot.subsystems.Shooter;
 
 /*
- * This class is where the bulk of the robot should be declared.  Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
- * (including subsystems, commands, and button mappings) should be declared here.
- */
+* This class is where the bulk of the robot should be declared.  Since Command-based is a
+* "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
+* periodic methods (other than the scheduler calls).  Instead, the structure of the robot
+* (including subsystems, commands, and button mappings) should be declared here.
+*/
 public class RobotContainer {
 
-    // The robot's subsystems
-    private final DriveSubsystem robotDrive = new DriveSubsystem();
-    private final Shooter shooter = new Shooter();
-    private final Agitator agitator = new Agitator();
-    private final Intake intake = new Intake();
-    private final Arm arm = new Arm();
-    private final Climber climber = new Climber();
-    private final Feeder feeder = new Feeder();
-    private final AprilTagCamera camera = new AprilTagCamera();
-    private final AutoFactory autoFactory;
+  // The robot's subsystems
+  private final DriveSubsystem robotDrive = new DriveSubsystem();
+  private final Shooter shooter = new Shooter();
+  private final Agitator agitator = new Agitator();
+  private final Intake intake = new Intake();
+  private final Arm arm = new Arm();
+  private final Climber climber = new Climber();
+  private final Feeder feeder = new Feeder();
+  private final AprilTagCamera camera = new AprilTagCamera();
+  private final AutoFactory autoFactory;
 
-    CommandXboxController driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
-    CommandXboxController supportController = new CommandXboxController(OIConstants.kSupportControllerPort);
+  CommandXboxController driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
+  CommandXboxController supportController = new CommandXboxController(OIConstants.kSupportControllerPort);
 
-    boolean fieldRelative = true;
+  boolean fieldRelative = true;
 
-    private final SendableChooser<Command> chooser = new SendableChooser<Command>();
+  private final SendableChooser<Command> chooser = new SendableChooser<Command>();
 
-    /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
-     */
-    public RobotContainer() {
+  /**
+   * The container for the robot. Contains subsystems, OI devices, and commands.
+   */
+  public RobotContainer() {
 
-        // Send subsystem data to dashboard
-        SmartDashboard.putData("Arm", arm);
-        SmartDashboard.putData("Shooter", shooter);
-        SmartDashboard.putData("Drivetrain", robotDrive);
+    // Send subsystem data to dashboard
+    SmartDashboard.putData("Arm", arm);
+    SmartDashboard.putData("Shooter", shooter);
+    SmartDashboard.putData("Drivetrain", robotDrive);
 
-        // Setup Choreo AutoFactory
-         autoFactory = new AutoFactory(
-            robotDrive::getPose, // A function that returns the current robot pose
-            robotDrive::resetOdometry, // A function that resets the current robot pose to the provided Pose2d
-            robotDrive::followTrajectory, // The drive subsystem trajectory follower 
-            true, // If alliance flipping should be enabled 
-            robotDrive // The drive subsystem
-        );
+    // Setup Choreo AutoFactory
+    autoFactory = new AutoFactory(
+        robotDrive::getPose, // A function that returns the current robot pose
+        robotDrive::resetOdometry, // A function that resets the current robot pose to the
+                                   // provided Pose2d
+        robotDrive::followTrajectory, // The drive subsystem trajectory follower
+        true, // If alliance flipping should be enabled
+        robotDrive // The drive subsystem
+    );
 
+    // Populate auton choices on dashboard
+    SmartDashboard.putData("Autonomous Chooser", chooser);
 
-        // Populate auton choices on dashboard
-        SmartDashboard.putString("Message for drive team", "WE LOVE YOU DRIVE TEAM!");
-        SmartDashboard.putData("Autonomous Chooser", chooser);
+    chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
-        chooser.setDefaultOption("#1 Nothing", new InstantCommand());
+    // Shoot pre-loaded balls immediately
+    chooser.addOption("#2 Shoot", shootCommand());
 
-        // Shoot pre-loaded balls immediately
-        chooser.addOption("#2 Shoot", shootCommand());
+    // Wait 5 seconds then shoot all pre-loaded balls
+    chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
+        arm.setSpeedCmd(0).withTimeout(5), // 5s delay to start
+        shootCommand()));
 
-        // Wait 5 seconds then shoot all pre-loaded balls
-        chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
-                arm.setSpeed(0).withTimeout(5), // 5s delay to start
-                shootCommand()
-        ));
+    chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
+        shootCommand(),
+        robotDrive.driveCommand(0, 0, 0, fieldRelative).withTimeout(0.5),
+        Commands.parallel(
+            robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
+            intake.intakeCmd(1))));
 
-        chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
-                shootCommand(),
-                robotDrive.driveCommand(0, 0, 0, fieldRelative).withTimeout(0.5),
-                Commands.parallel(
-                        robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
-                        intake.intakeCommand(1)
-                )
-        ));
+    chooser.addOption("Trajectory test", getTrajectoryCommand());
 
-        chooser.addOption("TESTING PURPOSES ONLY", Commands.sequence(
-                robotDrive.driveCommand(-0.1, -0.2, 0.6, fieldRelative).withTimeout(0.5),
-                Commands.parallel(
-                        arm.setSpeed(-0.5).withTimeout(0.5),
-                        robotDrive.driveCommand(0, -0.1, 0, fieldRelative).withTimeout(2.5),
-                        intake.intakeCommand(1)
-                ).withTimeout(3),
-                robotDrive.driveCommand(0, 0.1, -0.3, fieldRelative).withTimeout(0.3),
-                shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)).withTimeout(1.5),
-                Commands.parallel(
-                        shooter.chargeCommandPID(SmartDashboard.getNumber("targetRPM", 0)),
-                        feeder.shootCommand(0.5),
-                        agitator.agitatorCommand(0.3)
-                )
-        ));
-   
-        chooser.addOption("Trajectory test", getTrajectoryCommand());
-        Command shooterTrajectory = autoFactory.trajectoryCmd("Shooter");
-        chooser.addOption("ChoreoShooter", shooterTrajectory);
+    chooser.addOption("ChoreoShooter", Commands.sequence(
+        autoFactory.resetOdometry("Shooter"),
+        autoFactory.trajectoryCmd("Shooter")));
 
-        // Configure the button bindings
-        configureButtonBindings();
+    // Configure the button bindings
+    configureButtonBindings();
 
-        // Configure default commands
-        robotDrive.setDefaultCommand(
-                // The left stick controls translation of the robot.
-                // Turning is controlled by the X axis of the right stick.
-                new RunCommand(
-                        () -> robotDrive.drive(
-                                MathUtil.applyDeadband(
-                                        driverController.getLeftY(), OIConstants.kDriveDeadband),
-                                MathUtil.applyDeadband(
-                                        driverController.getLeftX(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(
-                                        driverController.getRightX(), OIConstants.kDriveDeadband),
-                                fieldRelative),
-                        robotDrive));
+    // Configure default commands
+    robotDrive.setDefaultCommand(
+        // The left stick controls translation of the robot.
+        // Turning is controlled by the X axis of the right stick.
+        new RunCommand(
+            () -> robotDrive.drive(
+                MathUtil.applyDeadband(
+                    driverController.getLeftY(),
+                    OIConstants.kDriveDeadband),
+                MathUtil.applyDeadband(
+                    driverController.getLeftX(),
+                    OIConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(
+                    driverController.getRightX(),
+                    OIConstants.kDriveDeadband),
+                fieldRelative),
+            robotDrive));
 
-        arm.setDefaultCommand(arm.setSpeed(supportController::getLeftY));
-        climber.setDefaultCommand(climber.manualControl(supportController::getRightY));
-    }
+            // TODO: Should we apply smoothing to the drive controls?
 
-    /**
-     * Get command to shoot the pre-loaded balls, used by a few auton modes.
-     */
-    public Command shootCommand() {
-        return Commands.sequence(
-                arm.setSpeed(-0.5).withTimeout(0.8),
-                shooter.setVelocityCommand(2940).withTimeout(1),
-                Commands.parallel(
-                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
-                        agitator.agitatorCommand(.3)).withTimeout(4),
-                Commands.parallel(
-                        arm.setSpeed(0.5),
-                        intake.intakeCommand(0.65)).withTimeout(0.5),
-                Commands.parallel(
-                        new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, () -> true),
-                        agitator.agitatorCommand(.3)).withTimeout(5)
-        );
-    }
+    arm.setDefaultCommand(arm.setSpeedCmd(supportController::getLeftY));
+    climber.setDefaultCommand(climber.setSpeedCmd(supportController::getRightY));
+  }
 
-    /**
-     * Use this method to define your button->command mappings. Buttons can be
-     * created by
-     * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its
-     * subclasses ({@link
-     * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling
-     * passing it to a
-     * {@link JoystickButton}.
-     */
-    private void configureButtonBindings() {
-        driverController
-                .rightBumper()
-                .whileTrue(new RunCommand(() -> robotDrive.setX(), robotDrive));
+  /**
+   * Get command to shoot the pre-loaded balls, used by a few auton modes.
+   */
+  public Command shootCommand() {
 
-        driverController
-                .start()
-                .onTrue(new InstantCommand(() -> robotDrive.zeroHeading(), robotDrive));
+    // TODO: ShootAndFeed should also run the agitator, they're always used together
+    // so it'd simplify the code
 
-        driverController
-                .back()
-                .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive));
+    return Commands.sequence(
+        arm.setSpeedCmd(-0.5).withTimeout(0.8),
+        // Spin up the shooter for a bit to save on running the agitator for no reason
+        shooter.setVelocityCmd(Shooter.kNearShotRpm).withTimeout(1),
+        // Shoot majority of the fuel
+        Commands.parallel(
+            new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
+                () -> true),
+            agitator.agitateCmd()).withTimeout(4),
+        // Run the arm up while running the intake to pull in remaining fuel, continue
+        // spinning shooter to save time
+        Commands.parallel(
+            arm.setSpeedCmd(0.5),
+            intake.intakeCmd(0.65),
+            shooter.setVelocityCmd(Shooter.kNearShotRpm)).withTimeout(0.5),
+        // Shoot the remaining fuel
+        Commands.parallel(
+            new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
+                () -> true),
+            agitator.agitateCmd()).withTimeout(5));
+  }
 
-        SmartDashboard.getNumber("targetPitch", 0);
+  /**
+   * Use this method to define your button->command mappings. Buttons can be
+   * created by
+   * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its
+   * subclasses ({@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling
+   * passing it to a
+   * {@link JoystickButton}.
+   */
+  private void configureButtonBindings() {
 
-        BooleanSupplier shooterSafetySwitch = () -> supportController.getRightTriggerAxis() > 0.3;
-        
-        supportController.a().whileTrue(new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> SmartDashboard.getNumber("targetRPM", 0), shooterSafetySwitch));
+    // Driver right bumper sets the wheels into an X formation to prevent movement.
+    driverController
+        .rightBumper()
+        .whileTrue(new RunCommand(() -> robotDrive.setX(), robotDrive));
 
-        // PID Style
-        supportController.x().whileTrue(new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 2940, shooterSafetySwitch));
-        supportController.y().whileTrue(new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 3530, shooterSafetySwitch));
-        supportController.b().whileTrue(new ShootAndFeed(shooter, feeder, Feeder.kFeedSpeed, () -> 5500, shooterSafetySwitch));
-        supportController.povLeft().whileTrue(shooter.chargeCommandPID(3000));
+    driverController
+        .start()
+        .onTrue(new InstantCommand(() -> robotDrive.zeroHeading(), robotDrive));
 
-        // Separate feeder command just for testing purposes
-        supportController.povUp().whileTrue(feeder.shootCommand(0.55));
-        
-        supportController.leftTrigger().whileTrue(feeder.shootCommand(-0.5));
+    driverController
+        .back()
+        .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive));
 
-        // Change feeder motor speeds to be different if needed
-        supportController.rightBumper().whileTrue(agitator.agitatorCommand(0.3));
-        supportController.leftBumper().whileTrue(intake.intakeCommand(1));
-        supportController.povDown().whileTrue(intake.intakeCommand(-1));
+    SmartDashboard.getNumber("targetPitch", 0);
 
-        // Arm commands
-        // m_supportController.povUp().onTrue(m_arm.upperCommand());
-        // m_supportController.povDown().onTrue(m_arm.lowerCommand());
-    }
+    BooleanSupplier shooterSafetySwitch = () -> supportController.getRightTriggerAxis() > 0.3;
 
-    /**
-     * Use this to pass the autonomous command to the main {@link Robot} class.
-     *
-     * @return the command to run in autonomous
-     */
-    public Command getAutonomousCommand() {
-        return chooser.getSelected();
-    }
+    supportController.a().whileTrue(new ShootAndFeed(shooter, feeder,
+        () -> SmartDashboard.getNumber("targetRPM", 0), shooterSafetySwitch));
 
-    public Command getTrajectoryCommand() {
-        TrajectoryConfig config =
-            new TrajectoryConfig(
-            AutoConstants.kMaxSpeedMetersPerSecond,
-            AutoConstants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DriveConstants.kDriveKinematics);
-         
-          // An example trajectory to follow. All units in meters.
-          Trajectory exampleTrajectory =
-          TrajectoryGenerator.generateTrajectory(
-          // Start at the origin facing the +X direction
-          new Pose2d(0, 0, new Rotation2d(0)),
-          // Pass through these two interior waypoints, making an 's' curve path
-          List.of(new Translation2d(0.5, 0.5), new Translation2d(1, -0.5)),
-          // End 3 meters straight ahead of where we started, facing forward
-          new Pose2d(1.5, 0, new Rotation2d(-Math.PI/2)),
-          config);
-          
-          var thetaController =
-          new ProfiledPIDController(
-          AutoConstants.kPThetaController, 0, 0,
-          AutoConstants.kThetaControllerConstraints);
-          thetaController.enableContinuousInput(-Math.PI, Math.PI);
-          
-          SwerveControllerCommand swerveControllerCommand =
-          new SwerveControllerCommand(
-          exampleTrajectory,
-          robotDrive::getPose, // Functional interface to feed supplier
-          DriveConstants.kDriveKinematics,
-          
-          // Position controllers
-          new PIDController(AutoConstants.kPXController, 0, 0),
-          new PIDController(AutoConstants.kPYController, 0, 0),
-          thetaController,
-          robotDrive::setModuleStates,
-          robotDrive);
-          
-          // Reset odometry to the starting pose of the trajectory.
-          robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
-          
-          // Run path following command, then stop at the end.
-          return swerveControllerCommand.andThen(() -> robotDrive.drive(0, 0, 0,
-          false));
-    }
+    // Shoot and feed fuel at fixed ranges with fixed shooter velocities for each
+    // range
+    supportController.x().whileTrue(
+        new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm, shooterSafetySwitch));
+    supportController.y().whileTrue(
+        new ShootAndFeed(shooter, feeder, () -> Shooter.kMidShotRpm, shooterSafetySwitch));
+    supportController.b().whileTrue(
+        new ShootAndFeed(shooter, feeder, () -> Shooter.kFarShotRpm, shooterSafetySwitch));
+
+    // Separate manual shooter and feeder commands just for testing purposes
+    supportController.povUp().whileTrue(feeder.shootCmd());
+    supportController.povLeft().whileTrue(shooter.chargeVelocityCmd(Shooter.kNearShotRpm));
+
+    // Reverse the feeder with the left trigger
+    supportController.leftTrigger().whileTrue(feeder.reverseCmd());
+
+    // Change feeder motor speeds to be different if needed
+    supportController.rightBumper().whileTrue(agitator.agitateCmd());
+    supportController.leftBumper().whileTrue(intake.intakeCmd(1));
+    supportController.povDown().whileTrue(intake.intakeCmd(-1));
+  }
+
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
+    return chooser.getSelected();
+  }
+
+  public Command getTrajectoryCommand() {
+    TrajectoryConfig config = new TrajectoryConfig(
+        AutoConstants.kMaxSpeedMetersPerSecond,
+        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+        .setKinematics(DriveConstants.kDriveKinematics);
+
+    // An example trajectory to follow. All units in meters.
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+        // Start at the origin facing the +X direction
+        new Pose2d(0, 0, new Rotation2d(0)),
+        // Pass through these two interior waypoints, making an 's' curve path
+        List.of(new Translation2d(0.5, 0.5), new Translation2d(1, -0.5)),
+        // End 3 meters straight ahead of where we started, facing forward
+        new Pose2d(1.5, 0, new Rotation2d(-Math.PI / 2)),
+        config);
+
+    var thetaController = new ProfiledPIDController(
+        AutoConstants.kPThetaController, 0, 0,
+        AutoConstants.kThetaControllerConstraints);
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
+        exampleTrajectory,
+        robotDrive::getPose, // Functional interface to feed supplier
+        DriveConstants.kDriveKinematics,
+
+        // Position controllers
+        new PIDController(AutoConstants.kPXController, 0, 0),
+        new PIDController(AutoConstants.kPYController, 0, 0),
+        thetaController,
+        robotDrive::setModuleStates,
+        robotDrive);
+
+    // Reset odometry to the starting pose of the trajectory.
+    robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
+
+    // Run path following command, then stop at the end.
+    return swerveControllerCommand.andThen(() -> robotDrive.drive(0, 0, 0,
+        false));
+  }
 }

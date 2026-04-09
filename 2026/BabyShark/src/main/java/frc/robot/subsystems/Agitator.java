@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -11,10 +7,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Agitator extends SubsystemBase {
 
+  public static final double kAgitateSpeed = 0.3;
+
   SparkFlex agitatorMotor = new SparkFlex(25, MotorType.kBrushless);
 
-  /** Creates a new Feeder. */
+  /** Creates a new Agitator. */
   public Agitator() {
+    // TODO: Add voltage compensation like in Shooter subsystem
+    // TODO: Should we be using velocity PID to ensure consistency in case the agitator gets bogged down with lots of fuel?
   }
 
   @Override
@@ -22,12 +22,20 @@ public class Agitator extends SubsystemBase {
     // This method will be called once per scheduler run
   }
 
-  public void set(double agitatorSpeed) {
-    agitatorMotor.set(agitatorSpeed);
+  public void set(double speed) {
+    agitatorMotor.set(speed);
   }
 
-  public Command agitatorCommand(double agitatorSpeed) {
-    return run(() -> agitatorMotor.set(-agitatorSpeed)).finallyDo(() -> agitatorMotor.set(0));
+  /**
+   * Returns a command that sends fuel towards the shooter.
+   */
+  public Command agitateCmd() {
+    return agitatorCmd(kAgitateSpeed);
   }
 
+  private Command agitatorCmd(double speed) {
+    // Leaving this version with a speed parameter just in case we ever want to make
+    // a reverse command
+    return run(() -> set(-speed)).finallyDo(() -> set(0));
+  }
 }

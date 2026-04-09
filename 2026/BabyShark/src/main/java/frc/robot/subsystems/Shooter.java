@@ -17,6 +17,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 
 public class Shooter extends SubsystemBase {
+
+  // RPMS for shooter settings at near, middle, and far distances
+  public static final double kNearShotRpm = 2940;
+  public static final double kMidShotRpm = 3530;
+  public static final double kFarShotRpm = 5500;
+
   SparkFlex shooterMotor = new SparkFlex(23, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
   private final SparkClosedLoopController motorClosedLoopController = shooterMotor.getClosedLoopController();
@@ -54,38 +60,23 @@ public class Shooter extends SubsystemBase {
     motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
   }
 
-  public Command setVelocityCommand(double rpms) {
+  public Command setVelocityCmd(double rpms) {
     return run(() -> setVelocity(rpms)).finallyDo(() -> set(0));
   }
 
-  /**
-   * Creates a command that opens and closes the tail fin using input suppliers.
-   *
-   * @param inputSupplier The supplier for the input on the controller.
-   * @return The command that opens and closes the tail fin using input suppliers.
-   */
-  public Command shooterCommand(DoubleSupplier inputSupplier) {
-    return run(() -> set(inputSupplier.getAsDouble())).finallyDo(() -> set(0));
+  public Command chargeCmd(double speed) {
+    return run(() -> shooterMotor.set(speed)).finallyDo(() -> set(0));
   }
 
-  public Command chargeCommand(double speed) {
-    return run(() -> shooterMotor.set(speed)).finallyDo(() -> shooterMotor.set(0));
+  public Command chargeVelocityCmd(double velocity) {
+    return run(() -> setVelocity(velocity)).finallyDo(() -> set(0));
   }
 
-  // RPMS for shooter settings
-  // 2940 - Low setting (0.55)
-  // 3530 - Medium (0.65)
-  // 5500 - High (1)
-
-  public Command chargeCommandPID(double speed) {
-    return run(() -> setVelocity(speed)).finallyDo(() -> shooterMotor.set(0));
+  public Command chargeVelocityCmd(DoubleSupplier velocitySupplier) {
+    return run(() -> setVelocity(velocitySupplier.getAsDouble())).finallyDo(() -> set(0));
   }
 
-  public Command chargeCommandPID(DoubleSupplier inputSupplier) {
-    return run(() -> setVelocity(inputSupplier.getAsDouble())).finallyDo(() -> shooterMotor.set(0));
-  }
-
-  public double getSpeed() {
+  public double getVelocity() {
     return shooterMotor.getEncoder().getVelocity();
   }
 }
