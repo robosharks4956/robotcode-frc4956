@@ -7,6 +7,7 @@ import choreo.trajectory.SwerveSample;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
@@ -19,6 +20,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -269,5 +271,21 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Apply the generated speeds
     driveFieldRelative(speeds);
+  }
+
+  /**
+   * See {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double)}.
+   */
+  public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds) {
+    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds);
+  }
+
+  /**
+   * See
+   * {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double, Matrix)}.
+   */
+  public void addVisionMeasurement(
+      Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds, stdDevs);
   }
 }

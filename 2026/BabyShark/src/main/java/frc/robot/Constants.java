@@ -101,13 +101,13 @@ public final class Constants {
 
   public static final class AutoConstants {
     // used to be 3mps for max and acceleration
-    public static final double kMaxSpeedMetersPerSecond = 1; // was at 3
-    public static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    public static final double kMaxSpeedMetersPerSecond = 5; // was at 3
+    public static final double kMaxAccelerationMetersPerSecondSquared = 10;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
-    public static final double kPXController = 1;
-    public static final double kPYController = 1;
+    public static final double kPXController = 5;
+    public static final double kPYController = 5;
     public static final double kPThetaController = 1;
 
     // Constraint for the motion profiled robot angle controller
