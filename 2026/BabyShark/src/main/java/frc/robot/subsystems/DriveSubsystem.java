@@ -66,14 +66,6 @@ public class DriveSubsystem extends SubsystemBase {
   // The gyro sensor
   private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
 
-  public Rotation2d getGyroscopeRotation() {
-    return Rotation2d.fromDegrees(-m_gyro.getAngle());
-  }
-
-  public double getGyroAngle() {
-    return -m_gyro.getAngle();
-  }
-
   /**
    * Standard deviations of model states. Increase these numbers to trust your
    * model's state estimates less. This matrix is in the form [x, y, theta]ᵀ, with
@@ -114,7 +106,7 @@ public class DriveSubsystem extends SubsystemBase {
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
     builder.addDoubleProperty("FL Distance meters", () -> m_frontLeft.getPosition().distanceMeters, null);
-    builder.addDoubleProperty("Gyro", this::getGyroAngle, null);
+    builder.addDoubleProperty("Gyro", this::getHeading, null);
   }
 
   @Override
@@ -179,23 +171,13 @@ public class DriveSubsystem extends SubsystemBase {
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
                 xSpeedDelivered, ySpeedDelivered, rotDelivered, getGyroscopeRotation())
             : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-        swerveModuleStates, DriveConstants.kMaxSpeedMetersPerSecond);
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_rearLeft.setDesiredState(swerveModuleStates[2]);
-    m_rearRight.setDesiredState(swerveModuleStates[3]);
+
+    setModuleStates(swerveModuleStates);
   }
 
   public void driveFieldRelative(ChassisSpeeds speeds) {
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-        swerveModuleStates, AutoConstants.kMaxSpeedMetersPerSecond);
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_rearLeft.setDesiredState(swerveModuleStates[2]);
-    m_rearRight.setDesiredState(swerveModuleStates[3]);
-
+    setModuleStates(swerveModuleStates);
   }
 
   public Command driveCommand(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
@@ -237,6 +219,10 @@ public class DriveSubsystem extends SubsystemBase {
     m_gyro.reset();
   }
 
+  public Rotation2d getGyroscopeRotation() {
+    return Rotation2d.fromDegrees(-m_gyro.getAngle());
+  }
+
   /**
    * Returns the heading of the robot.
    *
@@ -252,7 +238,7 @@ public class DriveSubsystem extends SubsystemBase {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
+    return -m_gyro.getRate();
   }
 
   public void stop() {
@@ -264,10 +250,19 @@ public class DriveSubsystem extends SubsystemBase {
     Pose2d pose = getPose();
 
     // Generate the next speeds for the robot
-    ChassisSpeeds speeds = new ChassisSpeeds(
+    // ChassisSpeeds speeds = new ChassisSpeeds(
+    //     sample.vx + xController.calculate(pose.getX(), sample.x),
+    //     sample.vy + yController.calculate(pose.getY(), sample.y),
+    //     sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+
+    // TODO: Try this next time, field relative speeds instead, maybe it explains why the robot wouldn't go the right direction sideways,
+    // it might have been interpreting going in the y direction on the field as meaning go the y direction on the bot, explaining why going x direction on the bot was fine, since that's the 
+    // same for both the bot and the field
+    ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         sample.vx + xController.calculate(pose.getX(), sample.x),
         sample.vy + yController.calculate(pose.getY(), sample.y),
-        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading), 
+        pose.getRotation()); // And this could also be getGyroscopeRotation()
 
     // Apply the generated speeds
     driveFieldRelative(speeds);
