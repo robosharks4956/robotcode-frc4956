@@ -1,7 +1,10 @@
 package frc.robot.subsystems;
 
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -10,11 +13,18 @@ public class Feeder extends SubsystemBase {
 
   public static final double kFeedSpeed = 0.5;
 
-  SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
+  private final SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
+  private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
   /** Creates a new Feeder. */
   public Feeder() {
-    // TODO: Add voltage compensation like in Shooter subsystem
+    motorConfig.voltageCompensation(12);
+    feederMotor.configure(
+        motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+  }
+
+  public void set(double speed) {
+    feederMotor.set(speed);
   }
 
   /**
@@ -29,14 +39,5 @@ public class Feeder extends SubsystemBase {
    */
   public Command reverseCmd() {
     return run(() -> set(-kFeedSpeed)).finallyDo(() -> set(0));
-  }
-
-  public void set(double speed) {
-    feederMotor.set(speed);
-  }
-
-  @Override
-  public void periodic() {
-    // This method will be called once per scheduler run
   }
 }
