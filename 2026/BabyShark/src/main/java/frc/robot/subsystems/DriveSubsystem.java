@@ -20,7 +20,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -30,7 +29,6 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
@@ -110,8 +108,11 @@ public class DriveSubsystem extends SubsystemBase {
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("FL Distance meters", () -> m_frontLeft.getPosition().distanceMeters, null);
-    builder.addDoubleProperty("Gyro", this::getHeading, null);
+    //builder.addDoubleProperty("FL Distance meters", () -> m_frontLeft.getPosition().distanceMeters, null);
+    builder.addDoubleProperty("FL Output %", m_frontLeft::getPercentOutput, null);
+    builder.addDoubleProperty("FL Velocity mps", () -> m_frontLeft.getState().speedMetersPerSecond, null);
+    builder.addDoubleProperty("Gyro", this::getGyroDegrees, null);
+    builder.addDoubleProperty("Heading", this::getHeadingDegrees, null);
   }
 
   @Override
@@ -149,12 +150,22 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * Returns the heading of the robot.
+   * Returns the heading of the robot according to the gyro.
    *
    * @return the robot's heading in degrees, from -180 to 180
    */
-  public double getHeading() {
+  public double getGyroDegrees() {
+    // TODO: Should we constrain to [-180,180]?
     return getGyroscopeRotation().getDegrees();
+  }
+
+  /**
+   * Returns the heading of the robot according to the pose estimator.
+   * @return Heading in degrees.
+   */
+  public double getHeadingDegrees() {
+    // TODO: Should we constrain to [-180,180]?
+    return getPose().getRotation().getDegrees();
   }
 
   /**
@@ -259,24 +270,11 @@ public class DriveSubsystem extends SubsystemBase {
     // Get the current pose of the robot
     Pose2d pose = getPose();
 
-    // Generate the next speeds for the robot
-    // ChassisSpeeds speeds = new ChassisSpeeds(
-    // sample.vx + xController.calculate(pose.getX(), sample.x),
-    // sample.vy + yController.calculate(pose.getY(), sample.y),
-    // sample.omega + headingController.calculate(pose.getRotation().getRadians(),
-    // sample.heading));
-
-    // TODO: Try this next time, field relative speeds instead, maybe it explains
-    // why the robot wouldn't go the right direction sideways,
-    // it might have been interpreting going in the y direction on the field as
-    // meaning go the y direction on the bot, explaining why going x direction on
-    // the bot was fine, since that's the
-    // same for both the bot and the field
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         sample.vx + xController.calculate(pose.getX(), sample.x),
         sample.vy + yController.calculate(pose.getY(), sample.y),
         sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
-        pose.getRotation()); // And this could also be getGyroscopeRotation()
+        pose.getRotation()); // Drive relative to field based on where robot thinks it is
 
     // Apply the generated speeds
     driveFieldRelative(speeds);
@@ -289,6 +287,9 @@ public class DriveSubsystem extends SubsystemBase {
 
       var targetHeading = headingRadiansSupplier.getAsDouble();
       var currentHeading = getPose().getRotation().getRadians();
+
+      SmartDashboard.putNumber("Current Heading", currentHeading);
+      SmartDashboard.putNumber("Target Heading", targetHeading);
 
       drive(
           MathUtil.applyDeadband(

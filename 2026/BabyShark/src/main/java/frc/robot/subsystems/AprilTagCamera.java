@@ -37,6 +37,7 @@ public class AprilTagCamera extends SubsystemBase {
       lastTargets = res;
     } else {
       lastTargets = null;
+      return;
     }
 
     if (lastTargets != null) {
@@ -50,6 +51,7 @@ public class AprilTagCamera extends SubsystemBase {
 
     SmartDashboard.putNumber("targetRPM", getRPMWithAirResistance(currentPitch));
 
+    // TODO: Speed this up somehow, we're overrunning the loop, this is the longest periodic function
   }
 
   public boolean hasTarget(int id) {

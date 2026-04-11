@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.AutoConstants;
@@ -91,15 +92,15 @@ public class RobotContainer {
     chooser.setDefaultOption("#1 Nothing", new InstantCommand());
 
     // Shoot pre-loaded balls immediately
-    chooser.addOption("#2 Shoot", shootCommand());
+    chooser.addOption("#2 Shoot", shootCmd());
 
     // Wait 5 seconds then shoot all pre-loaded balls
     chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
-        arm.setSpeedCmd(0).withTimeout(5), // 5s delay to start
-        shootCommand()));
+        new WaitCommand(5), // 5s delay to start
+        shootCmd()));
 
     chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
-        shootCommand(),
+        shootCmd(),
         robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5),
         Commands.parallel(
             robotDrive.driveCmd(-0.5, 0, 0, fieldRelative),
@@ -110,6 +111,11 @@ public class RobotContainer {
     chooser.addOption("ChoreoShooter", Commands.sequence(
         autoFactory.resetOdometry("Shooter"),
         autoFactory.trajectoryCmd("Shooter")));
+
+    chooser.addOption("ChoreoCenterpointer", Commands.sequence(
+        shootCmd(),
+        autoFactory.resetOdometry("Centerpointer"),
+        autoFactory.trajectoryCmd("Centerpointer")));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -141,7 +147,7 @@ public class RobotContainer {
   /**
    * Get command to shoot the pre-loaded balls, used by a few auton modes.
    */
-  public Command shootCommand() {
+  public Command shootCmd() {
 
     // TODO: ShootAndFeed should also run the agitator, they're always used together
     // so it'd simplify the code
@@ -165,7 +171,8 @@ public class RobotContainer {
         Commands.parallel(
             new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
                 () -> true),
-            agitator.agitateCmd()).withTimeout(5));
+            agitator.agitateCmd(),
+            arm.setSpeedCmd(-0.4).withTimeout(0.6)).withTimeout(3));
   }
 
   /**
@@ -190,7 +197,7 @@ public class RobotContainer {
 
     // Hold left bumper to drive with location locked onto a heading facing the goal
     driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverController::getLeftY,
-        driverController::getLeftX, () -> 0));
+        driverController::getLeftX, this::radiansToGoal));
     // TODO: After testing, replace constant 0 with this::radiansToGoal
 
     SmartDashboard.getNumber("targetPitch", 0);
