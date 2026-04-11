@@ -9,20 +9,19 @@ public class ShootAndFeed extends Command {
 
   private Shooter shooter;
   private Feeder feeder;
-  private DoubleSupplier rpm_supplier;
+  private DoubleSupplier rpmSupplier;
 
   // Will not run the feeder until this is true, gives operator a way to hold off
   // shooting until robot is in position
-  // In auton, just set to true all the time so it fires when RPM target is
-  // reached
+  // In auton, just set to true all the time so it fires when ready
   private BooleanSupplier safetySwitch;
 
-  public ShootAndFeed(Shooter shooter, Feeder feeder, DoubleSupplier rpm_supplier,
+  public ShootAndFeed(Shooter shooter, Feeder feeder, DoubleSupplier rpmSupplier,
       BooleanSupplier safetySwitch) {
     addRequirements(shooter, feeder);
     this.shooter = shooter;
     this.feeder = feeder;
-    this.rpm_supplier = rpm_supplier;
+    this.rpmSupplier = rpmSupplier;
     this.safetySwitch = safetySwitch;
   }
 
@@ -34,7 +33,7 @@ public class ShootAndFeed extends Command {
   @Override
   public void execute() {
     final double shooter_current_speed = shooter.getVelocity();
-    double rpm = rpm_supplier.getAsDouble();
+    double rpm = rpmSupplier.getAsDouble();
     shooter.setVelocity(rpm);
     if (safetySwitch.getAsBoolean()) {
       if (shooter_current_speed >= rpm) {

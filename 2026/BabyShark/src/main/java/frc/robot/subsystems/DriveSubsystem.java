@@ -139,6 +139,33 @@ public class DriveSubsystem extends SubsystemBase {
     return m_odometry.getEstimatedPosition();
   }
 
+  /** Zeroes the heading of the robot. */
+  public void zeroHeading() {
+    m_gyro.reset();
+  }
+
+  public Rotation2d getGyroscopeRotation() {
+    return Rotation2d.fromDegrees(-m_gyro.getAngle());
+  }
+
+  /**
+   * Returns the heading of the robot.
+   *
+   * @return the robot's heading in degrees, from -180 to 180
+   */
+  public double getHeading() {
+    return getGyroscopeRotation().getDegrees();
+  }
+
+  /**
+   * Returns the turn rate of the robot.
+   *
+   * @return The turn rate of the robot, in degrees per second
+   */
+  public double getTurnRate() {
+    return -m_gyro.getRate();
+  }
+
   /**
    * Resets the odometry to the specified pose.
    *
@@ -185,16 +212,21 @@ public class DriveSubsystem extends SubsystemBase {
     setModuleStates(swerveModuleStates);
   }
 
-  public Command driveCommand(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+  /**
+   * Return a command to drive at fixed speeds.
+   */
+  public Command driveCmd(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     return run(() -> drive(xSpeed, ySpeed, rot, fieldRelative));
   }
 
   /** Sets the wheels into an X formation to prevent movement. */
-  public void setX() {
-    m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    m_rearLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+  public Command setXCmd() {
+    return run(() -> {
+      m_frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+      m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+      m_rearLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+      m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    });
   }
 
   /**
@@ -217,33 +249,6 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearLeft.resetEncoders();
     m_frontRight.resetEncoders();
     m_rearRight.resetEncoders();
-  }
-
-  /** Zeroes the heading of the robot. */
-  public void zeroHeading() {
-    m_gyro.reset();
-  }
-
-  public Rotation2d getGyroscopeRotation() {
-    return Rotation2d.fromDegrees(-m_gyro.getAngle());
-  }
-
-  /**
-   * Returns the heading of the robot.
-   *
-   * @return the robot's heading in degrees, from -180 to 180
-   */
-  public double getHeading() {
-    return getGyroscopeRotation().getDegrees();
-  }
-
-  /**
-   * Returns the turn rate of the robot.
-   *
-   * @return The turn rate of the robot, in degrees per second
-   */
-  public double getTurnRate() {
-    return -m_gyro.getRate();
   }
 
   public void stop() {

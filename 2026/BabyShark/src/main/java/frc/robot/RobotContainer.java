@@ -100,9 +100,9 @@ public class RobotContainer {
 
     chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
         shootCommand(),
-        robotDrive.driveCommand(0, 0, 0, fieldRelative).withTimeout(0.5),
+        robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5),
         Commands.parallel(
-            robotDrive.driveCommand(-0.5, 0, 0, fieldRelative),
+            robotDrive.driveCmd(-0.5, 0, 0, fieldRelative),
             intake.intakeCmd(1))));
 
     chooser.addOption("Trajectory test", getTrajectoryCommand());
@@ -170,23 +170,19 @@ public class RobotContainer {
 
   /**
    * Use this method to define your button->command mappings. Buttons can be
-   * created by
-   * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its
-   * subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling
-   * passing it to a
+   * created by instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of
+   * its subclasses ({@link edu.wpi.first.wpilibj.Joystick} or
+   * {@link XboxController}), and then calling passing it to a
    * {@link JoystickButton}.
    */
   private void configureButtonBindings() {
 
     // Driver right bumper sets the wheels into an X formation to prevent movement.
-    driverController
-        .rightBumper()
-        .whileTrue(new RunCommand(() -> robotDrive.setX(), robotDrive));
+    driverController.rightBumper().whileTrue(robotDrive.setXCmd());
 
     driverController
         .start()
-        .onTrue(new InstantCommand(() -> robotDrive.zeroHeading(), robotDrive));
+        .onTrue(new InstantCommand(robotDrive::zeroHeading, robotDrive));
 
     driverController
         .back()
@@ -228,10 +224,8 @@ public class RobotContainer {
 
   /**
    * Get the angle in radians between the robots current position and the center
-   * of the goal.
-   * Points at either red or blue based on the alliance color reported by the
-   * field system or
-   * drive station.
+   * of the goal. Points at either red or blue based on the alliance color
+   * reported by the field system or drive station.
    */
   public double radiansToGoal() {
 
