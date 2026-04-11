@@ -70,18 +70,18 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command setVelocityCmd(double rpms) {
-    return run(() -> setVelocity(rpms)).finallyDo(() -> set(0));
+    return startEnd(() -> setVelocity(rpms), () -> set(0));
   }
 
   public Command chargeCmd(double speed) {
-    return run(() -> set(speed)).finallyDo(() -> set(0));
+    return startEnd(() -> set(speed), () -> set(0));
   }
 
   public Command chargeVelocityCmd(double velocity) {
-    return run(() -> setVelocity(velocity)).finallyDo(() -> set(0));
+    return setVelocityCmd(velocity);
   }
 
   public Command chargeVelocityCmd(DoubleSupplier velocitySupplier) {
-    return run(() -> setVelocity(velocitySupplier.getAsDouble())).finallyDo(() -> set(0));
+    return runEnd(() -> setVelocity(velocitySupplier.getAsDouble()), () -> set(0));
   }
 }

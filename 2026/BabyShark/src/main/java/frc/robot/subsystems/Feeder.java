@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Feeder extends SubsystemBase {
 
-  public static final double kFeedSpeed = 0.5;
+  public static final double kFeedSpeed = 0.55;
 
   private final SparkMax feederMotor = new SparkMax(24, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
@@ -31,13 +31,13 @@ public class Feeder extends SubsystemBase {
    * Return a Command to feed fuel into the shooter.
    */
   public Command shootCmd() {
-    return run(() -> set(kFeedSpeed)).finallyDo(() -> set(0));
+    return startEnd(() -> set(kFeedSpeed), () -> set(0));
   }
 
   /**
    * Return a Command to reverse the feeder, sending fuel back into the hopper.
    */
   public Command reverseCmd() {
-    return run(() -> set(-kFeedSpeed)).finallyDo(() -> set(0));
+    return startEnd(() -> set(-kFeedSpeed), () -> set(0));
   }
 }

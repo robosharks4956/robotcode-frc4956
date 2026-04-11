@@ -21,6 +21,6 @@ public class Intake extends SubsystemBase {
   }
 
   public Command intakeCmd(double speed) {
-    return run(() -> intakeMotor.set(speed)).finallyDo(() -> intakeMotor.set(0));
+    return startEnd(() -> intakeMotor.set(speed), () -> intakeMotor.set(0));
   }
 }
