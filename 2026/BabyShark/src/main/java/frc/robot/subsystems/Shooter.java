@@ -18,24 +18,35 @@ import java.util.function.DoubleSupplier;
 
 public class Shooter extends SubsystemBase {
 
-  // RPMS for shooter settings at near, middle, and far distances
+  // RPMs for shooter settings at near, middle, and far distances
   public static final double kNearShotRpm = 2940;
   public static final double kMidShotRpm = 3530;
   public static final double kFarShotRpm = 5500;
 
-  SparkFlex shooterMotor = new SparkFlex(23, MotorType.kBrushless);
+  // This is what we measured as max RPMs achieved at 12V
+  public static final double kMaxRpm = 6472;
+
+  private final SparkFlex shooterMotor = new SparkFlex(23, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
   private final SparkClosedLoopController motorClosedLoopController = shooterMotor.getClosedLoopController();
-  RelativeEncoder shooterEncoder;
+  private final RelativeEncoder shooterEncoder;
 
   public Shooter() {
     // Set voltage compensation so it always sets percent as though motor is at 12
     // volts, compensates for voltage drop when everything is running
     motorConfig.voltageCompensation(12);
-    motorConfig.closedLoop.pid(6 * 0.5 / 10000.0, 0, 0).outputRange(-1, 1);
-    motorConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
+    
+    motorConfig
+      .closedLoop
+      .pid(6 * 0.5 / 10000.0, 0, 0)
+      .outputRange(-1, 1)
+      .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+      .feedForward
+      .kV(12 / kMaxRpm); // Velocity target is multiplied by this ratio to get feedforward contribution
+
     shooterMotor.configure(
         motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
     shooterEncoder = shooterMotor.getEncoder();
   }
 
@@ -46,8 +57,8 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("Shooter Output", shooterMotor::getAppliedOutput, null);
   }
 
-  @Override
-  public void periodic() {
+  public double getVelocity() {
+    return shooterEncoder.getVelocity();
   }
 
   public void set(double speed) {
@@ -55,9 +66,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void setVelocity(double rpms) {
-    double feedForward = 12 * rpms / 6472;
-    // feedForward = 0;
-    motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0, feedForward);
+    motorClosedLoopController.setSetpoint(rpms, ControlType.kVelocity, ClosedLoopSlot.kSlot0);
   }
 
   public Command setVelocityCmd(double rpms) {
@@ -65,7 +74,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command chargeCmd(double speed) {
-    return run(() -> shooterMotor.set(speed)).finallyDo(() -> set(0));
+    return run(() -> set(speed)).finallyDo(() -> set(0));
   }
 
   public Command chargeVelocityCmd(double velocity) {
@@ -74,9 +83,5 @@ public class Shooter extends SubsystemBase {
 
   public Command chargeVelocityCmd(DoubleSupplier velocitySupplier) {
     return run(() -> setVelocity(velocitySupplier.getAsDouble())).finallyDo(() -> set(0));
-  }
-
-  public double getVelocity() {
-    return shooterMotor.getEncoder().getVelocity();
   }
 }
