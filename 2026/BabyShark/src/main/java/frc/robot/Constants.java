@@ -35,9 +35,12 @@ public final class Constants {
     // Driving Parameters - Note that these are not the maximum capable speeds of
     // the robot, rather the allowed maximum speeds
     public static final double kMaxSpeedMetersPerSecond = 6; // 1 is a slow speed
-    // TODO: Can we go faster? Can't remember if we tried to increase this or not. We tried it before we added a bunch of stuff to the robot,
-    // but maybe what used to be too fast isn't fast enough now. Try it on the cart, just see if the speed goes up any when this increases. Will need to make it
-    // configurable from smart dashboard, can do via initSendable method in DriveSubsystem.
+    // TODO: Can we go faster? Can't remember if we tried to increase this or not.
+    // We tried it before we added a bunch of stuff to the robot,
+    // but maybe what used to be too fast isn't fast enough now. Try it on the cart,
+    // just see if the speed goes up any when this increases. Will need to make it
+    // configurable from smart dashboard, can do via initSendable method in
+    // DriveSubsystem.
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
 
     // Chassis configuration
@@ -47,7 +50,7 @@ public final class Constants {
 
     // Distance between front and back wheels on robot
     public static final double kWheelBase = Units.inchesToMeters(23.5);
-    
+
     public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
         new Translation2d(kWheelBase / 2, kTrackWidth / 2),
         new Translation2d(kWheelBase / 2, -kTrackWidth / 2),
@@ -125,20 +128,31 @@ public final class Constants {
 
   public static class Vision {
 
-      // TODO: Update these constants with our values before using the Vision class
+    // TODO: Update these constants with our values before using the Vision class
 
-        public static final String kCameraName = "YOUR CAMERA NAME";
-        // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-        public static final Transform3d kRobotToCam =
-                new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0));
+    public static final String kCameraName = "YOUR CAMERA NAME";
+    // Cam mounted facing forward, half a meter forward of center, half a meter up
+    // from center.
+    public static final Transform3d kRobotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5),
+        new Rotation3d(0, 0, 0));
 
-        // The layout of the AprilTags on the field
-        public static final AprilTagFieldLayout kTagLayout =
-                AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    // The layout of the AprilTags on the field
+    public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-        // The standard deviations of our vision estimated poses, which affect correction rate
-        // (Fake values. Experiment and determine estimation noise on an actual robot.)
-        public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-        public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
-    }
+    // The standard deviations of our vision estimated poses, which affect
+    // correction rate
+    // (Fake values. Experiment and determine estimation noise on an actual robot.)
+    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+  }
+
+  /**
+   * Coordinates of locations on the field.
+   */
+  public static class Field {
+    public static final double kBlueGoalX = 4.62;
+    public static final double kBlueGoalY = 4.05;
+    public static final double kRedGoalX = 11.9;
+    public static final double kRedGoalY = 4.05;
+  }
 }

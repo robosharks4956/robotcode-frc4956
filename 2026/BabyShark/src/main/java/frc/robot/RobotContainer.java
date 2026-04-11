@@ -1,6 +1,7 @@
 package frc.robot;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import choreo.auto.AutoFactory;
@@ -13,6 +14,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -129,7 +132,7 @@ public class RobotContainer {
                 fieldRelative),
             robotDrive));
 
-            // TODO: Should we apply smoothing to the drive controls?
+    // TODO: Should we apply smoothing to the drive controls?
 
     arm.setDefaultCommand(arm.setSpeedCmd(supportController::getLeftY));
     climber.setDefaultCommand(climber.setSpeedCmd(supportController::getRightY));
@@ -189,6 +192,11 @@ public class RobotContainer {
         .back()
         .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive));
 
+    // Hold left bumper to drive with location locked onto a heading facing the goal
+    driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverController::getLeftY,
+        driverController::getLeftX, () -> 0));
+    // TODO: After testing, replace constant 0 with this::radiansToGoal
+
     SmartDashboard.getNumber("targetPitch", 0);
 
     BooleanSupplier shooterSafetySwitch = () -> supportController.getRightTriggerAxis() > 0.3;
@@ -216,6 +224,40 @@ public class RobotContainer {
     supportController.rightBumper().whileTrue(agitator.agitateCmd());
     supportController.leftBumper().whileTrue(intake.intakeCmd(1));
     supportController.povDown().whileTrue(intake.intakeCmd(-1));
+  }
+
+  /**
+   * Get the angle in radians between the robots current position and the center
+   * of the goal.
+   * Points at either red or blue based on the alliance color reported by the
+   * field system or
+   * drive station.
+   */
+  public double radiansToGoal() {
+
+    var alliance = getAlliance();
+
+    // Get goal coordinates based on alliance color
+    double targetX = alliance == Alliance.Blue ? Constants.Field.kBlueGoalX : Constants.Field.kRedGoalX;
+    double targetY = alliance == Alliance.Blue ? Constants.Field.kBlueGoalY : Constants.Field.kRedGoalY;
+
+    // Get current robot coordinates
+    Pose2d pose = robotDrive.getPose();
+    double robotX = pose.getX();
+    double robotY = pose.getY();
+
+    // Shooter is back of robot, so get angle from goal to robot so that the
+    // rotation will be away from the goal, which will result in shooter facing goal
+    return Math.atan2(targetY - robotY, targetX - robotX);
+  }
+
+  public Alliance getAlliance() {
+    Optional<Alliance> ally = DriverStation.getAlliance();
+
+    if (ally.isPresent())
+      return ally.get();
+    else
+      return Alliance.Blue;
   }
 
   /**

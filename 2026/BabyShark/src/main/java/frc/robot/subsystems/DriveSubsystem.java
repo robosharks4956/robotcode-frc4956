@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
@@ -7,6 +9,7 @@ import choreo.trajectory.SwerveSample;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -27,9 +30,11 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.OIConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -251,21 +256,46 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Generate the next speeds for the robot
     // ChassisSpeeds speeds = new ChassisSpeeds(
-    //     sample.vx + xController.calculate(pose.getX(), sample.x),
-    //     sample.vy + yController.calculate(pose.getY(), sample.y),
-    //     sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+    // sample.vx + xController.calculate(pose.getX(), sample.x),
+    // sample.vy + yController.calculate(pose.getY(), sample.y),
+    // sample.omega + headingController.calculate(pose.getRotation().getRadians(),
+    // sample.heading));
 
-    // TODO: Try this next time, field relative speeds instead, maybe it explains why the robot wouldn't go the right direction sideways,
-    // it might have been interpreting going in the y direction on the field as meaning go the y direction on the bot, explaining why going x direction on the bot was fine, since that's the 
+    // TODO: Try this next time, field relative speeds instead, maybe it explains
+    // why the robot wouldn't go the right direction sideways,
+    // it might have been interpreting going in the y direction on the field as
+    // meaning go the y direction on the bot, explaining why going x direction on
+    // the bot was fine, since that's the
     // same for both the bot and the field
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         sample.vx + xController.calculate(pose.getX(), sample.x),
         sample.vy + yController.calculate(pose.getY(), sample.y),
-        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading), 
+        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
         pose.getRotation()); // And this could also be getGyroscopeRotation()
 
     // Apply the generated speeds
     driveFieldRelative(speeds);
+  }
+
+  public Command driveOnHeadingCmd(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
+      DoubleSupplier headingRadiansSupplier) {
+
+    return run(() -> {
+
+      var targetHeading = headingRadiansSupplier.getAsDouble();
+      var currentHeading = getPose().getRotation().getRadians();
+
+      drive(
+          MathUtil.applyDeadband(
+              xSupplier.getAsDouble(),
+              OIConstants.kDriveDeadband),
+          MathUtil.applyDeadband(
+              ySupplier.getAsDouble(),
+              OIConstants.kDriveDeadband),
+          // Set turn speed based on difference between target and current heading
+          headingController.calculate(currentHeading, targetHeading),
+          false);
+    });
   }
 
   /**
