@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -37,6 +38,7 @@ import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Rumble;
 import frc.robot.subsystems.ShootAndFeed;
 import frc.robot.subsystems.Shooter;
 
@@ -61,6 +63,8 @@ public class RobotContainer {
 
   CommandXboxController driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
   CommandXboxController supportController = new CommandXboxController(OIConstants.kSupportControllerPort);
+  Rumble driverRumble = new Rumble(driverController);
+  Rumble supportRumble = new Rumble(supportController);
 
   boolean fieldRelative = true;
 
@@ -191,14 +195,17 @@ public class RobotContainer {
         .start()
         .onTrue(new InstantCommand(robotDrive::zeroHeading, robotDrive));
 
+    // Driver back button toggles field relative / robot relative with a different
+    // rumble pattern for each
     driverController
         .back()
-        .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive));
+        .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive)
+            .andThen(
+                new ConditionalCommand(driverRumble.longShortCmd(), driverRumble.shortLongCmd(), () -> fieldRelative)));
 
     // Hold left bumper to drive with location locked onto a heading facing the goal
     driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverController::getLeftY,
         driverController::getLeftX, this::radiansToGoal));
-    // TODO: After testing, replace constant 0 with this::radiansToGoal
 
     SmartDashboard.getNumber("targetPitch", 0);
 
