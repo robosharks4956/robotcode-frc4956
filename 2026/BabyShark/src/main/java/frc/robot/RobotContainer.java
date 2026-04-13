@@ -221,8 +221,6 @@ public class RobotContainer {
                 new ConditionalCommand(driverRumble.longShortCmd(), driverRumble.shortLongCmd(),
                     () -> fieldRelative)));
 
-    SmartDashboard.getNumber("targetPitch", 0);
-
     BooleanSupplier shooterSafetySwitch = () -> supportController.getRightTriggerAxis() > 0.3;
 
     supportController.a().whileTrue(new ShootAndFeed(shooter, feeder,
