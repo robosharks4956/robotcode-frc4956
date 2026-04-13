@@ -69,6 +69,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   // For heading stabilized with PID, what is the target?
   private double driverHeadingTargetRadians = 0;
+  private double previousTurnRate = 0;
 
   // Field map used to send current robot pose to a field diagram on the dashboard
   public final Field2d field = new Field2d();
@@ -422,8 +423,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     final double maxDifference = Math.PI / 4;
 
-    double previousTurnRate = 0;
-
+    
     return run(() -> {
 
       var requestedTurnRate = rotationSupplier.getAsDouble();
@@ -450,6 +450,8 @@ public class DriveSubsystem extends SubsystemBase {
         turnSpeed = headingController.calculate(currentHeading, driverHeadingTargetRadians);
       }
 
+      previousTurnRate = requestedTurnRate;
+
       drive(
           xSupplier.getAsDouble(),
           ySupplier.getAsDouble(),
@@ -461,6 +463,7 @@ public class DriveSubsystem extends SubsystemBase {
         .beforeStarting(() -> {
           // Save current rotation in radians as a starting point
           driverHeadingTargetRadians = getHeadingRadians();
+          previousTurnRate = 0;
         });
   }
 
