@@ -32,13 +32,24 @@ public class AprilTagCamera extends SubsystemBase {
 
   @Override
   public void periodic() {
+    calculateTargetRPM();
+  }
+
+  public void calculateTargetRPM() {
     var res = camera.getAllUnreadResults();
+
+    // Maybe this will help, version check looks expensive so maybe stop doing it after first iteration
+    PhotonCamera.setVersionCheckEnabled(false);
+
     if (res.size() > 0) {
       lastTargets = res;
     } else {
       lastTargets = null;
       return;
     }
+
+    // TODO: Are we reading these results in descing order by timestamp? If so, just need first good result then break,
+    // because otherwise older results take priority, plus no need to calculate targetRPM twice
 
     if (lastTargets != null) {
       for (PhotonPipelineResult target : lastTargets) {
@@ -51,7 +62,8 @@ public class AprilTagCamera extends SubsystemBase {
 
     SmartDashboard.putNumber("targetRPM", getRPMWithAirResistance(currentPitch));
 
-    // TODO: Speed this up somehow, we're overrunning the loop, this is the longest periodic function
+    // TODO: Speed the above code up somehow, we're overrunning the loop, this is the longest periodic function
+
   }
 
   public boolean hasTarget(int id) {
