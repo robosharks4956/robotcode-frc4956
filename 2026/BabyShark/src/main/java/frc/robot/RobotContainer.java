@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -123,6 +124,12 @@ public class RobotContainer {
         autoFactory.resetOdometry("Centerpointer"),
         autoFactory.trajectoryCmd("Centerpointer")));
 
+    chooser.addOption("ChoreoCenterpointer", Commands.sequence(
+        shootCmd(),
+        autoFactory.resetOdometry("CenterToDepot"),
+        autoFactory.trajectoryCmd("CenterToDepot"),
+        shootCmd()));
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -132,7 +139,7 @@ public class RobotContainer {
    */
   public Command shootCmd() {
 
-    // TODO: ShootAndFeed should also run the agitator, they're always used together
+    // TODO: ShootAndFeed could also run the agitator, they're always used together
     // so it'd simplify the code
 
     return Commands.sequence(
