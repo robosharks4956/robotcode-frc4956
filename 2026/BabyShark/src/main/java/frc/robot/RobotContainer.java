@@ -60,6 +60,7 @@ public class RobotContainer {
   private final Feeder feeder = new Feeder();
   private final AprilTagCamera camera = new AprilTagCamera();
   private final AutoFactory autoFactory;
+  private Vision vision;
 
   CommandXboxController driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
   CommandXboxController supportController = new CommandXboxController(OIConstants.kSupportControllerPort);
@@ -82,6 +83,9 @@ public class RobotContainer {
     SmartDashboard.putData("Arm", arm);
     SmartDashboard.putData("Shooter", shooter);
     SmartDashboard.putData("Drivetrain", robotDrive);
+
+    // Setup Vision
+    //vision = new Vision(robotDrive::addVisionMeasurement);
 
     // Setup Choreo AutoFactory
     autoFactory = new AutoFactory(
