@@ -26,6 +26,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -101,6 +103,12 @@ public class DriveSubsystem extends SubsystemBase {
       stateStdDevs,
       visionMeasurementStdDevs);
 
+  StructArrayPublisher<SwerveModuleState> currentStatePublisher = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("CurrentStates", SwerveModuleState.struct).publish();
+
+  StructArrayPublisher<SwerveModuleState> desiredStatePublisher = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("DesiredStates", SwerveModuleState.struct).publish();
+
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
     // Usage reporting for MAXSwerve template
@@ -135,6 +143,11 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Send robot pose to dashboard
     field.setRobotPose(getPose());
+
+    // Send swerve module states to the dashboard, can be used with AdvantageScope
+    // to see how well the modules are keeping up with targets
+    // currentStatePublisher.set(getModuleStates());
+    // desiredStatePublisher.set(getDesiredModuleStates());
   }
 
   /**
@@ -283,6 +296,30 @@ public class DriveSubsystem extends SubsystemBase {
     m_frontRight.setDesiredState(desiredStates[1]);
     m_rearLeft.setDesiredState(desiredStates[2]);
     m_rearRight.setDesiredState(desiredStates[3]);
+  }
+
+  /**
+   * Gets the current swerve module states.
+   */
+  public SwerveModuleState[] getModuleStates() {
+    return new SwerveModuleState[] {
+        m_frontLeft.getState(),
+        m_frontRight.getState(),
+        m_rearLeft.getState(),
+        m_rearRight.getState(),
+    };
+  }
+
+  /**
+   * Gets the desired swerve module states.
+   */
+  public SwerveModuleState[] getDesiredModuleStates() {
+    return new SwerveModuleState[] {
+        m_frontLeft.getDesiredState(),
+        m_frontRight.getDesiredState(),
+        m_rearLeft.getDesiredState(),
+        m_rearRight.getDesiredState(),
+    };
   }
 
   /** Resets the drive encoders to currently read a position of 0. */

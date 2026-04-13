@@ -79,6 +79,15 @@ public class MAXSwerveModule {
   }
 
   /**
+   * Returns the desired state of the module.
+   *
+   * @return The desired state of the module.
+   */
+  public SwerveModuleState getDesiredState() {
+    return m_desiredState;
+  }
+
+  /**
    * Returns the current position of the module.
    *
    * @return The current position of the module.
