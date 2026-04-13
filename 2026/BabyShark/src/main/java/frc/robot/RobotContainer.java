@@ -1,8 +1,8 @@
 package frc.robot;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
@@ -14,7 +14,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -23,11 +22,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
@@ -68,6 +67,9 @@ public class RobotContainer {
 
   boolean fieldRelative = true;
 
+  // Set in Robot.java at autonomous and teleop initialization
+  public Alliance currentAlliance = Alliance.Blue;
+
   private final SendableChooser<Command> chooser = new SendableChooser<Command>();
 
   /**
@@ -93,10 +95,10 @@ public class RobotContainer {
     // Populate auton choices on dashboard
     SmartDashboard.putData("Autonomous Chooser", chooser);
 
-    chooser.setDefaultOption("#1 Nothing", new InstantCommand());
+    chooser.addOption("#1 Nothing", new InstantCommand());
 
     // Shoot pre-loaded balls immediately
-    chooser.addOption("#2 Shoot", shootCmd());
+    chooser.setDefaultOption("#2 Shoot", shootCmd());
 
     // Wait 5 seconds then shoot all pre-loaded balls
     chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
@@ -123,29 +125,6 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
-
-    // Configure default commands
-    robotDrive.setDefaultCommand(
-        // The left stick controls translation of the robot.
-        // Turning is controlled by the X axis of the right stick.
-        new RunCommand(
-            () -> robotDrive.drive(
-                MathUtil.applyDeadband(
-                    driverController.getLeftY(),
-                    OIConstants.kDriveDeadband),
-                MathUtil.applyDeadband(
-                    driverController.getLeftX(),
-                    OIConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(
-                    driverController.getRightX(),
-                    OIConstants.kDriveDeadband),
-                fieldRelative),
-            robotDrive));
-
-    // TODO: Should we apply smoothing to the drive controls?
-
-    arm.setDefaultCommand(arm.setSpeedCmd(supportController::getLeftY));
-    climber.setDefaultCommand(climber.setSpeedCmd(supportController::getRightY));
   }
 
   /**
@@ -188,9 +167,40 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
 
+    arm.setDefaultCommand(arm.setSpeedCmd(supportController::getLeftY));
+    climber.setDefaultCommand(climber.setSpeedCmd(supportController::getRightY));
+
+    // The left stick controls translation of the robot.
+    // Turning is controlled by the X axis of the right stick.
+    DoubleSupplier driverXSupplier = () -> MathUtil.applyDeadband(
+        driverController.getLeftY(),
+        OIConstants.kDriveDeadband);
+    DoubleSupplier driverYSupplier = () -> MathUtil.applyDeadband(
+        driverController.getLeftY(),
+        OIConstants.kDriveDeadband);
+    DoubleSupplier driveRotationSupplier = () -> MathUtil.applyDeadband(
+        -driverController.getRightX(), // Inverted because CCW is positive but moving stick left goes negative
+        OIConstants.kDriveDeadband);
+    BooleanSupplier fieldRelativeSupplier = () -> fieldRelative;
+
+    // Configure default commands
+    robotDrive.setDefaultCommand(
+        robotDrive.driveCmd(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
+
+    // TODO: Should we apply smoothing to the drive controls?
+
+    // Hold left bumper to drive with location locked onto a heading facing the goal
+    driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverXSupplier,
+        driverYSupplier, this::radiansToGoal));
+
+    // Hold down left trigger to test driving with PID control
+    new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
+        robotDrive.driveWithPIDTurning(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
+
     // Driver right bumper sets the wheels into an X formation to prevent movement.
     driverController.rightBumper().whileTrue(robotDrive.setXCmd());
 
+    // Driver start button resets the gyro
     driverController
         .start()
         .onTrue(new InstantCommand(robotDrive::zeroHeading, robotDrive));
@@ -199,13 +209,10 @@ public class RobotContainer {
     // rumble pattern for each
     driverController
         .back()
-        .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative, robotDrive)
+        .onTrue(new InstantCommand(() -> fieldRelative = !fieldRelative)
             .andThen(
-                new ConditionalCommand(driverRumble.longShortCmd(), driverRumble.shortLongCmd(), () -> fieldRelative)));
-
-    // Hold left bumper to drive with location locked onto a heading facing the goal
-    driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverController::getLeftY,
-        driverController::getLeftX, this::radiansToGoal));
+                new ConditionalCommand(driverRumble.longShortCmd(), driverRumble.shortLongCmd(),
+                    () -> fieldRelative)));
 
     SmartDashboard.getNumber("targetPitch", 0);
 
@@ -214,8 +221,7 @@ public class RobotContainer {
     supportController.a().whileTrue(new ShootAndFeed(shooter, feeder,
         () -> SmartDashboard.getNumber("targetRPM", 0), shooterSafetySwitch));
 
-    // Shoot and feed fuel at fixed ranges with fixed shooter velocities for each
-    // range
+    // Shoot and feed fuel at fixed ranges
     supportController.x().whileTrue(
         new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm, shooterSafetySwitch));
     supportController.y().whileTrue(
@@ -230,7 +236,6 @@ public class RobotContainer {
     // Reverse the feeder with the left trigger
     supportController.leftTrigger().whileTrue(feeder.reverseCmd());
 
-    // Change feeder motor speeds to be different if needed
     supportController.rightBumper().whileTrue(agitator.agitateCmd());
     supportController.leftBumper().whileTrue(intake.intakeCmd(1));
     supportController.povDown().whileTrue(intake.intakeCmd(-1));
@@ -243,11 +248,9 @@ public class RobotContainer {
    */
   public double radiansToGoal() {
 
-    var alliance = getAlliance();
-
     // Get goal coordinates based on alliance color
-    double targetX = alliance == Alliance.Blue ? Constants.Field.kBlueGoalX : Constants.Field.kRedGoalX;
-    double targetY = alliance == Alliance.Blue ? Constants.Field.kBlueGoalY : Constants.Field.kRedGoalY;
+    double targetX = currentAlliance == Alliance.Blue ? Constants.Field.kBlueGoalX : Constants.Field.kRedGoalX;
+    double targetY = currentAlliance == Alliance.Blue ? Constants.Field.kBlueGoalY : Constants.Field.kRedGoalY;
 
     // Get current robot coordinates
     Pose2d pose = robotDrive.getPose();
@@ -257,15 +260,6 @@ public class RobotContainer {
     // Shooter is back of robot, so get angle from goal to robot so that the
     // rotation will be away from the goal, which will result in shooter facing goal
     return Math.atan2(targetY - robotY, targetX - robotX);
-  }
-
-  public Alliance getAlliance() {
-    Optional<Alliance> ally = DriverStation.getAlliance();
-
-    if (ally.isPresent())
-      return ally.get();
-    else
-      return Alliance.Blue;
   }
 
   /**

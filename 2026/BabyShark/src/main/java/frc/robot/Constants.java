@@ -100,6 +100,7 @@ public final class Constants {
     public static final int kDriverControllerPort = 0;
     public static final int kSupportControllerPort = 1;
     public static final double kDriveDeadband = 0.05;
+    public static final double kTurnRateRadiansPerSecond = Math.PI;
   }
 
   public static final class AutoConstants {

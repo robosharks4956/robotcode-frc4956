@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.studica.frc.AHRS;
@@ -26,6 +27,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -62,6 +64,9 @@ public class DriveSubsystem extends SubsystemBase {
   ProfiledPIDController headingController = new ProfiledPIDController(
       AutoConstants.kPThetaController, 0, 0,
       AutoConstants.kThetaControllerConstraints);
+
+  // For heading stabilized with PID, what is the target?
+  private double driverHeadingTargetRadians = 0;
 
   // Field map used to send current robot pose to a field diagram on the dashboard
   public final Field2d field = new Field2d();
@@ -108,9 +113,10 @@ public class DriveSubsystem extends SubsystemBase {
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    //builder.addDoubleProperty("FL Distance meters", () -> m_frontLeft.getPosition().distanceMeters, null);
-    builder.addDoubleProperty("FL Output %", m_frontLeft::getPercentOutput, null);
-    builder.addDoubleProperty("FL Velocity mps", () -> m_frontLeft.getState().speedMetersPerSecond, null);
+    // builder.addDoubleProperty("FL Output %", m_frontLeft::getPercentOutput,
+    // null);
+    // builder.addDoubleProperty("FL Velocity mps", () ->
+    // m_frontLeft.getState().speedMetersPerSecond, null);
     builder.addDoubleProperty("Gyro", this::getGyroDegrees, null);
     builder.addDoubleProperty("Heading", this::getHeadingDegrees, null);
   }
@@ -143,6 +149,7 @@ public class DriveSubsystem extends SubsystemBase {
   /** Zeroes the heading of the robot. */
   public void zeroHeading() {
     m_gyro.reset();
+    driverHeadingTargetRadians = getHeadingRadians();
   }
 
   public Rotation2d getGyroscopeRotation() {
@@ -155,17 +162,25 @@ public class DriveSubsystem extends SubsystemBase {
    * @return the robot's heading in degrees, from -180 to 180
    */
   public double getGyroDegrees() {
-    // TODO: Should we constrain to [-180,180]?
     return getGyroscopeRotation().getDegrees();
   }
 
   /**
    * Returns the heading of the robot according to the pose estimator.
+   * 
    * @return Heading in degrees.
    */
   public double getHeadingDegrees() {
-    // TODO: Should we constrain to [-180,180]?
     return getPose().getRotation().getDegrees();
+  }
+
+  /**
+   * Returns the heading of the robot according to the pose estimator.
+   * 
+   * @return Heading in radians.
+   */
+  public double getHeadingRadians() {
+    return getPose().getRotation().getRadians();
   }
 
   /**
@@ -192,6 +207,7 @@ public class DriveSubsystem extends SubsystemBase {
             m_rearRight.getPosition()
         },
         pose);
+    driverHeadingTargetRadians = getHeadingRadians();
   }
 
   /**
@@ -228,6 +244,21 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Command driveCmd(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     return run(() -> drive(xSpeed, ySpeed, rot, fieldRelative));
+  }
+
+  /**
+   * Method to drive the robot using speeds from a controller info.
+   *
+   * @param xSpeed        Speed in the x direction (forward).
+   * @param ySpeed        Speed in the y direction (sideways).
+   * @param rotation      Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative
+   *                      to the field.
+   */
+  public Command driveCmd(DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier rotation,
+      BooleanSupplier fieldRelative) {
+    return run(() -> drive(xSpeed.getAsDouble(), ySpeed.getAsDouble(), rotation.getAsDouble(),
+        fieldRelative.getAsBoolean()));
   }
 
   /** Sets the wheels into an X formation to prevent movement. */
@@ -286,22 +317,67 @@ public class DriveSubsystem extends SubsystemBase {
     return run(() -> {
 
       var targetHeading = headingRadiansSupplier.getAsDouble();
-      var currentHeading = getPose().getRotation().getRadians();
+      var currentHeading = getHeadingRadians();
 
-      SmartDashboard.putNumber("Current Heading", currentHeading);
-      SmartDashboard.putNumber("Target Heading", targetHeading);
+      SmartDashboard.putNumber("Current Heading rad", currentHeading);
+      SmartDashboard.putNumber("Target Heading rad", targetHeading);
 
       drive(
-          MathUtil.applyDeadband(
-              xSupplier.getAsDouble(),
-              OIConstants.kDriveDeadband),
-          MathUtil.applyDeadband(
-              ySupplier.getAsDouble(),
-              OIConstants.kDriveDeadband),
+          xSupplier.getAsDouble(),
+          ySupplier.getAsDouble(),
           // Set turn speed based on difference between target and current heading
           headingController.calculate(currentHeading, targetHeading),
           false);
     });
+  }
+
+  /**
+   * Drive using a PID controller to stabilize the heading. An internal heading
+   * target is maintained, and every loop the input from the driver controller is
+   * used to add or subtract from that target, turning left or right. The PID
+   * ensures the robot stays on that heading so that it can drive in a straight
+   * line.
+   */
+  public Command driveWithPIDTurning(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
+      DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
+
+    Timer timer = new Timer();
+
+    final double maxDifference = Math.PI / 4;
+
+    return run(() -> {
+
+      // Use timer to scale turn rate based on how much time elapsed since last loop
+      var elapsedSeconds = timer.get();
+      timer.restart();
+      var requestedTurnRate = OIConstants.kTurnRateRadiansPerSecond * elapsedSeconds
+          * rotationSupplier.getAsDouble();
+      driverHeadingTargetRadians += requestedTurnRate;
+      var currentHeading = getHeadingRadians();
+
+      // To avoid any weirdness stemming from getting stuck or being pinned by a
+      // defence bot, ensure target is never more than 45 degrees from current
+      driverHeadingTargetRadians = MathUtil.clamp(driverHeadingTargetRadians, currentHeading - maxDifference,
+          currentHeading + maxDifference);
+
+      SmartDashboard.putNumber("Current Heading rad", currentHeading);
+      SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
+
+      drive(
+          xSupplier.getAsDouble(),
+          ySupplier.getAsDouble(),
+          // Set turn speed based on difference between target and current heading
+          headingController.calculate(currentHeading, driverHeadingTargetRadians),
+          fieldRelativeSupplier.getAsBoolean());
+    })
+        // Any time this command starts, save current rotation in radians as a
+        // starting point, and reset the timer
+        .beforeStarting(() -> {
+          // Save current rotation in radians as a starting point
+          driverHeadingTargetRadians = getHeadingRadians();
+          // Restart the timer
+          timer.restart();
+        });
   }
 
   /**
