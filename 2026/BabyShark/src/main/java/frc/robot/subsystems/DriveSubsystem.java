@@ -417,6 +417,53 @@ public class DriveSubsystem extends SubsystemBase {
         });
   }
 
+    public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
+      DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
+
+    final double maxDifference = Math.PI / 4;
+
+    double previousTurnRate = 0;
+
+    return run(() -> {
+
+      var requestedTurnRate = rotationSupplier.getAsDouble();
+      var currentHeading = getHeadingRadians();
+
+      // To avoid any weirdness stemming from getting stuck or being pinned by a
+      // defence bot, ensure target is never more than 45 degrees from current
+      driverHeadingTargetRadians = MathUtil.clamp(driverHeadingTargetRadians, currentHeading - maxDifference,
+          currentHeading + maxDifference);
+
+      //SmartDashboard.putNumber("Current Heading rad", currentHeading);
+      //SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
+
+      double turnSpeed = requestedTurnRate;
+
+      if (requestedTurnRate == 0) {
+
+        // Any time the driver lets off the stick, save current heading as the heading to lock to
+        if (previousTurnRate != 0) {
+          driverHeadingTargetRadians = currentHeading;
+        }
+
+        // Set turn speed based on difference between target and current heading
+        turnSpeed = headingController.calculate(currentHeading, driverHeadingTargetRadians);
+      }
+
+      drive(
+          xSupplier.getAsDouble(),
+          ySupplier.getAsDouble(),
+          turnSpeed,
+          fieldRelativeSupplier.getAsBoolean());
+    })
+        // Any time this command starts, save current rotation in radians as a
+        // starting point, and reset the timer
+        .beforeStarting(() -> {
+          // Save current rotation in radians as a starting point
+          driverHeadingTargetRadians = getHeadingRadians();
+        });
+  }
+
   /**
    * See {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double)}.
    */

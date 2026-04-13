@@ -204,6 +204,10 @@ public class RobotContainer {
     new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
         robotDrive.driveWithPIDTurning(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
+    // Hold down left trigger to test driving with PID stabilization
+    new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
+        robotDrive.driveWithPIDStabilization(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
+
     // Driver right bumper sets the wheels into an X formation to prevent movement.
     driverController.rightBumper().whileTrue(robotDrive.setXCmd());
 
