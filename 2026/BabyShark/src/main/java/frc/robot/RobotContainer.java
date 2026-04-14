@@ -97,6 +97,8 @@ public class RobotContainer {
         robotDrive // The drive subsystem
     );
 
+    CommandScheduler.getInstance().schedule(autoFactory.warmupCmd());
+
     // Populate auton choices on dashboard
     SmartDashboard.putData("Autonomous Chooser", chooser);
 
@@ -133,6 +135,14 @@ public class RobotContainer {
         autoFactory.resetOdometry("CenterToDepot"),
         autoFactory.trajectoryCmd("CenterToDepot"),
         shootCmd()));
+
+    chooser.addOption("RotateToShoot", Commands.sequence(
+        new InstantCommand(robotDrive::zeroHeading, robotDrive),
+        new WaitCommand(1),
+        autoFactory.resetOdometry("RotateToShoot"),
+        autoFactory.trajectoryCmd("RotateToShoot"),
+        robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5)));
+        //shootCmd()));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -178,6 +188,7 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
 
+
     arm.setDefaultCommand(arm.setSpeedCmd(supportController::getLeftY));
     climber.setDefaultCommand(climber.setSpeedCmd(supportController::getRightY));
 
@@ -187,7 +198,7 @@ public class RobotContainer {
         driverController.getLeftY(),
         OIConstants.kDriveDeadband);
     DoubleSupplier driverYSupplier = () -> MathUtil.applyDeadband(
-        driverController.getLeftY(),
+        driverController.getLeftX(),
         OIConstants.kDriveDeadband);
     DoubleSupplier driveRotationSupplier = () -> MathUtil.applyDeadband(
         -driverController.getRightX(), // Inverted because CCW is positive but moving stick left goes negative
@@ -201,16 +212,16 @@ public class RobotContainer {
     // TODO: Should we apply smoothing to the drive controls?
 
     // Hold left bumper to drive with location locked onto a heading facing the goal
-    driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverXSupplier,
-        driverYSupplier, this::radiansToGoal));
+    //driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverXSupplier,
+    //    driverYSupplier, this::radiansToGoal));
 
     // Hold down left trigger to test driving with PID control
-    new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
-        robotDrive.driveWithPIDTurning(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
+    //new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
+     //   robotDrive.driveWithPIDTurning(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
     // Hold down left trigger to test driving with PID stabilization
-    new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
-        robotDrive.driveWithPIDStabilization(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
+    //new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
+    //    robotDrive.driveWithPIDStabilization(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
     // Driver right bumper sets the wheels into an X formation to prevent movement.
     driverController.rightBumper().whileTrue(robotDrive.setXCmd());

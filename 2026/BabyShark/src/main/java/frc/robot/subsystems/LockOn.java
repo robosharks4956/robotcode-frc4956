@@ -34,7 +34,7 @@ public class LockOn extends Command {
   private boolean hasTarget = false;
   private boolean targetInRange = false;
   private final Timer timer = new Timer();
-  int id = 16;
+  int id = 26;
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override

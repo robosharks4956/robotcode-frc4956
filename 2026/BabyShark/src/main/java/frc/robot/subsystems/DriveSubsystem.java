@@ -147,8 +147,8 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Send swerve module states to the dashboard, can be used with AdvantageScope
     // to see how well the modules are keeping up with targets
-    // currentStatePublisher.set(getModuleStates());
-    // desiredStatePublisher.set(getDesiredModuleStates());
+    currentStatePublisher.set(getModuleStates());
+    desiredStatePublisher.set(getDesiredModuleStates());
   }
 
   /**
@@ -304,6 +304,15 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
+        m_frontLeft.getState(),
+        m_frontRight.getState(),
+        m_rearLeft.getState(),
+        m_rearRight.getState(),
+    };
+  }
+    
+    public ChassisSpeeds getChassisSpeed() {
+    return new ChassisSpeeds() {
         m_frontLeft.getState(),
         m_frontRight.getState(),
         m_rearLeft.getState(),

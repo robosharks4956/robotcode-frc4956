@@ -29,6 +29,8 @@ public class AprilTagCamera extends SubsystemBase {
   public int cameraHeight = 720;
   public List<PhotonPipelineResult> lastTargets;
   public double currentPitch = 0;
+  public double currentYaw = 0;
+  public int currentId = 1;
 
   @Override
   public void periodic() {
@@ -55,12 +57,16 @@ public class AprilTagCamera extends SubsystemBase {
       for (PhotonPipelineResult target : lastTargets) {
         if (target.hasTargets()) {
           var bestTarget = target.getBestTarget();
-          currentPitch = bestTarget.getPitch();
+          currentPitch = Math.toRadians(bestTarget.getPitch());
+          currentYaw = Math.toRadians(bestTarget.getYaw());
+          currentId = bestTarget.getFiducialId();
         }
       }
     }
 
-    SmartDashboard.putNumber("targetRPM", getRPMWithAirResistance(currentPitch));
+    SmartDashboard.putNumber("targetRPM", getRPM_A());
+    SmartDashboard.putNumber("distance", getDistance(currentPitch, currentYaw, currentId));
+    SmartDashboard.putNumber("Pitch", currentPitch);
 
     // TODO: Speed the above code up somehow, we're overrunning the loop, this is the longest periodic function
 
@@ -107,7 +113,7 @@ public class AprilTagCamera extends SubsystemBase {
     }
     return 0;
   }
-
+  /*
   public double getDistance(int id) {
     if (lastTargets != null) {
       for (PhotonPipelineResult target : lastTargets) {
@@ -121,16 +127,24 @@ public class AprilTagCamera extends SubsystemBase {
     }
     return 0;
   }
-
-  public double getRPM(double pitch) {
-    // private double pitch = getPitch();
-    final double h = 36.75; // in
-    final double cameraAngle = 34; // deg
-    final double offset = 25; // in - may need further testing
-    final double distance = (h / (Math.tan(Math.toRadians(cameraAngle + pitch)))) + offset;
-    // The Distance Above is Correct
+  */
 
 
+  public double getDistance(double pitch, double yaw, int id) {
+    final double[] tagOffsets = {200, 23.5, 200, 200, 23.5, 200, 200, 27.418, 27.418, 23.5, 27.418, 200, 200, 200, 200, 200}; // NEEDS FIXING
+    final double robotOffset = 3.5;
+
+    final double cameraAngle = Math.toRadians(34);
+    final double yCamera = 35.875;
+    final double xCamera = yCamera / Math.tan(cameraAngle + pitch);
+
+    return xCamera*Math.cos(yaw) + Math.sqrt(Math.pow(tagOffsets[(id - 1)%16], 2) - Math.pow(xCamera*Math.sin(yaw), 2)) + robotOffset;
+  }
+
+  // No Air Resistance
+  public double getRPM_NA(double pitch) {
+  
+    final double distance = getDistance(currentPitch, currentYaw, currentId);
     final double g = 386.089; // in squared
     final double shootingAngle = Math.toRadians(73.5); // deg, likely needs minor adjustments WAS AT 75
     final double y = 62; // in 
@@ -141,8 +155,30 @@ public class AprilTagCamera extends SubsystemBase {
     return 2 * velocity * (15 / Math.PI) * e; // rpm
   }
 
-  public double getRPMWithAirResistance(double pitch) {
-    final double h = 36.75; // in
+  // With Air Resistance
+  public double getRPM_A() {
+    
+    final double g = 386.089;
+    final double mu = 0.15; // Needs Tuning
+
+    final double y = 58.5; // Needs Measurement
+    final double x = getDistance(currentPitch, currentYaw, currentId);
+    
+    final double shootingAngle = Math.toRadians(73.5); // needs measurement
+
+    final double C = Math.exp( mu*mu/g * (y - x*Math.tan(shootingAngle)));
+
+    double z = mu*x/Math.cos(shootingAngle)/Math.sqrt(g*x*x/(x*Math.sin(2*shootingAngle) - y*(Math.cos(2*shootingAngle) + 1)));
+
+    for(byte i = 0; i < 2; i++) {
+      z = z - (C*Math.exp(-z) - 1)/z - 1;
+    }
+
+    final double velocity = mu*x/z/Math.cos(shootingAngle);
+
+    return 30/Math.PI * velocity * 1; // final number is the error constant, needs tuning
+
+    /*final double h = 36.75; // in
     final double cameraAngle = 34; // deg
     final double offset = 25; // in - may need further testing
     final double distance = (h / (Math.tan(Math.toRadians(cameraAngle + pitch)))) + offset;
@@ -160,6 +196,6 @@ public class AprilTagCamera extends SubsystemBase {
     }
 
 
-    return 30*velocity/Math.PI;
+    return 30*velocity/Math.PI;*/
   }
 }
