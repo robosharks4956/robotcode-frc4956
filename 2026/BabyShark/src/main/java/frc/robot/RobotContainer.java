@@ -51,7 +51,7 @@ import frc.robot.subsystems.Shooter;
 public class RobotContainer {
 
   // The robot's subsystems
-  private final DriveSubsystem robotDrive = new DriveSubsystem();
+  public final DriveSubsystem robotDrive = new DriveSubsystem();
   private final Shooter shooter = new Shooter();
   private final Agitator agitator = new Agitator();
   private final Intake intake = new Intake();
@@ -137,8 +137,6 @@ public class RobotContainer {
         shootCmd()));
 
     chooser.addOption("RotateToShoot", Commands.sequence(
-        new InstantCommand(robotDrive::zeroHeading, robotDrive),
-        new WaitCommand(1),
         autoFactory.resetOdometry("RotateToShoot"),
         autoFactory.trajectoryCmd("RotateToShoot"),
         robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5)));
@@ -207,6 +205,7 @@ public class RobotContainer {
 
     // Configure default commands
     robotDrive.setDefaultCommand(
+        //robotDrive.driveWithPIDStabilization(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
         robotDrive.driveCmd(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
     // TODO: Should we apply smoothing to the drive controls?
@@ -214,14 +213,6 @@ public class RobotContainer {
     // Hold left bumper to drive with location locked onto a heading facing the goal
     //driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverXSupplier,
     //    driverYSupplier, this::radiansToGoal));
-
-    // Hold down left trigger to test driving with PID control
-    //new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
-     //   robotDrive.driveWithPIDTurning(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
-
-    // Hold down left trigger to test driving with PID stabilization
-    //new Trigger(() -> driverController.getLeftTriggerAxis() > 0.3).whileTrue(
-    //    robotDrive.driveWithPIDStabilization(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
     // Driver right bumper sets the wheels into an X formation to prevent movement.
     driverController.rightBumper().whileTrue(robotDrive.setXCmd());

@@ -28,7 +28,9 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -115,6 +117,7 @@ public class DriveSubsystem extends SubsystemBase {
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
     SmartDashboard.putData("field", field);
+    //SmartDashboard.putData("HeadingPID", headingController);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -122,10 +125,8 @@ public class DriveSubsystem extends SubsystemBase {
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    // builder.addDoubleProperty("FL Output %", m_frontLeft::getPercentOutput,
-    // null);
-    // builder.addDoubleProperty("FL Velocity mps", () ->
-    // m_frontLeft.getState().speedMetersPerSecond, null);
+    builder.addDoubleProperty("FL Output %", m_frontLeft::getPercentOutput, null);
+    builder.addDoubleProperty("FL Velocity mps", () -> m_frontLeft.getState().speedMetersPerSecond, null);
     builder.addDoubleProperty("Gyro", this::getGyroDegrees, null);
     builder.addDoubleProperty("Heading", this::getHeadingDegrees, null);
   }
@@ -310,15 +311,6 @@ public class DriveSubsystem extends SubsystemBase {
         m_rearRight.getState(),
     };
   }
-    
-    public ChassisSpeeds getChassisSpeed() {
-    return new ChassisSpeeds() {
-        m_frontLeft.getState(),
-        m_frontRight.getState(),
-        m_rearLeft.getState(),
-        m_rearRight.getState(),
-    };
-  }
 
   /**
    * Gets the desired swerve module states.
@@ -348,10 +340,21 @@ public class DriveSubsystem extends SubsystemBase {
     // Get the current pose of the robot
     Pose2d pose = getPose();
 
+    var vx = sample.vx + xController.calculate(pose.getX(), sample.x);
+    var vy = sample.vy + yController.calculate(pose.getY(), sample.y);
+    var omega = sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading);
+
+    SmartDashboard.putNumber("vx", vx);
+    SmartDashboard.putNumber("vy", vy);
+    SmartDashboard.putNumber("omega", omega);
+    var log = DataLogManager.getLog();
+    var myDoubleLog = new DoubleLogEntry(log, "omega");
+    myDoubleLog.append(omega);
+
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-        sample.vx + xController.calculate(pose.getX(), sample.x),
-        sample.vy + yController.calculate(pose.getY(), sample.y),
-        sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+        vx,
+        vy,
+        omega,
         pose.getRotation()); // Drive relative to field based on where robot thinks it is
 
     // Apply the generated speeds
@@ -378,61 +381,11 @@ public class DriveSubsystem extends SubsystemBase {
     });
   }
 
-  /**
-   * Drive using a PID controller to stabilize the heading. An internal heading
-   * target is maintained, and every loop the input from the driver controller is
-   * used to add or subtract from that target, turning left or right. The PID
-   * ensures the robot stays on that heading so that it can drive in a straight
-   * line.
-   */
-  public Command driveWithPIDTurning(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
-      DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
-
-    Timer timer = new Timer();
-
-    final double maxDifference = Math.PI / 4;
-
-    return run(() -> {
-
-      // Use timer to scale turn rate based on how much time elapsed since last loop
-      var elapsedSeconds = timer.get();
-      timer.restart();
-      var requestedTurnRate = OIConstants.kTurnRateRadiansPerSecond * elapsedSeconds
-          * rotationSupplier.getAsDouble();
-      driverHeadingTargetRadians += requestedTurnRate;
-      var currentHeading = getHeadingRadians();
-
-      // To avoid any weirdness stemming from getting stuck or being pinned by a
-      // defence bot, ensure target is never more than 45 degrees from current
-      driverHeadingTargetRadians = MathUtil.clamp(driverHeadingTargetRadians, currentHeading - maxDifference,
-          currentHeading + maxDifference);
-
-      SmartDashboard.putNumber("Current Heading rad", currentHeading);
-      SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
-
-      drive(
-          xSupplier.getAsDouble(),
-          ySupplier.getAsDouble(),
-          // Set turn speed based on difference between target and current heading
-          headingController.calculate(currentHeading, driverHeadingTargetRadians),
-          fieldRelativeSupplier.getAsBoolean());
-    })
-        // Any time this command starts, save current rotation in radians as a
-        // starting point, and reset the timer
-        .beforeStarting(() -> {
-          // Save current rotation in radians as a starting point
-          driverHeadingTargetRadians = getHeadingRadians();
-          // Restart the timer
-          timer.restart();
-        });
-  }
-
-    public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
+  public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
       DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
 
     final double maxDifference = Math.PI / 4;
 
-    
     return run(() -> {
 
       var requestedTurnRate = rotationSupplier.getAsDouble();
@@ -443,14 +396,15 @@ public class DriveSubsystem extends SubsystemBase {
       driverHeadingTargetRadians = MathUtil.clamp(driverHeadingTargetRadians, currentHeading - maxDifference,
           currentHeading + maxDifference);
 
-      //SmartDashboard.putNumber("Current Heading rad", currentHeading);
-      //SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
+      // SmartDashboard.putNumber("Current Heading rad", currentHeading);
+      // SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
 
       double turnSpeed = requestedTurnRate;
 
       if (requestedTurnRate == 0) {
 
-        // Any time the driver lets off the stick, save current heading as the heading to lock to
+        // Any time the driver lets off the stick, save current heading as the heading
+        // to lock to
         if (previousTurnRate != 0) {
           driverHeadingTargetRadians = currentHeading;
         }

@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Agitator extends SubsystemBase {
 
-  public static final double kAgitateSpeed = 0.35;
+  public static final double kAgitateSpeed = 0.32;
 
   private final SparkFlex agitatorMotor = new SparkFlex(25, MotorType.kBrushless);
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();

@@ -26,7 +26,7 @@ public class Rumble extends SubsystemBase {
   }
 
   public void full() {
-    controller.setRumble(RumbleType.kBothRumble, 0);
+    controller.setRumble(RumbleType.kBothRumble, 1);
   }
 
   private Command timeCmd(double seconds) {
