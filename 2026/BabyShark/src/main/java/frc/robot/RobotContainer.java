@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -97,7 +98,9 @@ public class RobotContainer {
         robotDrive // The drive subsystem
     );
 
-    CommandScheduler.getInstance().schedule(autoFactory.warmupCmd());
+
+    //FIx
+    //CommandScheduler.getInstance().schedule(autoFactory.warmupCmd());
 
     // Populate auton choices on dashboard
     SmartDashboard.putData("Autonomous Chooser", chooser);
@@ -131,16 +134,29 @@ public class RobotContainer {
         autoFactory.trajectoryCmd("Centerpointer")));
 
     chooser.addOption("ChoreoCenterpointer", Commands.sequence(
-        shootCmd(),
         autoFactory.resetOdometry("CenterToDepot"),
         autoFactory.trajectoryCmd("CenterToDepot"),
-        shootCmd()));
+        autoFactory.resetOdometry("DepotToCenter"),
+        autoFactory.trajectoryCmd("DepotToCenter")));
+        
 
     chooser.addOption("RotateToShoot", Commands.sequence(
         autoFactory.resetOdometry("RotateToShoot"),
         autoFactory.trajectoryCmd("RotateToShoot"),
-        robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5)));
-        //shootCmd()));
+        shootCmd()));
+
+    chooser.addOption("LeftStart", Commands.sequence(
+        autoFactory.resetOdometry("RotateToShoot"),
+        autoFactory.trajectoryCmd("RotateToShoot"),
+        robotDrive.stopCmd(),
+        shootCmd(),
+        autoFactory.resetOdometry("CenterToDepot"),
+        Commands.parallel(        
+            autoFactory.trajectoryCmd("CenterToDepot"),
+            intake.intakeCmd(1).withTimeout(2)),
+        autoFactory.resetOdometry("DepotToCenter"),
+        autoFactory.trajectoryCmd("DepotToCenter"),
+        robotDrive.stopCmd()));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -155,14 +171,13 @@ public class RobotContainer {
     // so it'd simplify the code
 
     return Commands.sequence(
-        arm.setSpeedCmd(-0.5).withTimeout(0.8),
+        arm.setSpeedCmd(-0.6).withTimeout(0.6),
         // Spin up the shooter for a bit to save on running the agitator for no reason
-        shooter.setVelocityCmd(Shooter.kNearShotRpm).withTimeout(1),
         // Shoot majority of the fuel
         Commands.parallel(
             new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
                 () -> true),
-            agitator.agitateCmd()).withTimeout(4),
+            agitator.agitateCmd()).withTimeout(3),
         // Run the arm up while running the intake to pull in remaining fuel, continue
         // spinning shooter to save time
         Commands.parallel(
@@ -174,7 +189,7 @@ public class RobotContainer {
             new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
                 () -> true),
             agitator.agitateCmd(),
-            arm.setSpeedCmd(-0.4).withTimeout(0.6)).withTimeout(3));
+            arm.setSpeedCmd(-0.4).withTimeout(0.8)).withTimeout(3));
   }
 
   /**
@@ -209,6 +224,7 @@ public class RobotContainer {
         robotDrive.driveCmd(driverXSupplier, driverYSupplier, driveRotationSupplier, fieldRelativeSupplier));
 
     // TODO: Should we apply smoothing to the drive controls?
+    
 
     // Hold left bumper to drive with location locked onto a heading facing the goal
     //driverController.leftBumper().whileTrue(robotDrive.driveOnHeadingCmd(driverXSupplier,

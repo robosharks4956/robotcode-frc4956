@@ -117,7 +117,7 @@ public class DriveSubsystem extends SubsystemBase {
     // Usage reporting for MAXSwerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
     SmartDashboard.putData("field", field);
-    //SmartDashboard.putData("HeadingPID", headingController);
+    // SmartDashboard.putData("HeadingPID", headingController);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -223,6 +223,7 @@ public class DriveSubsystem extends SubsystemBase {
         },
         pose);
     driverHeadingTargetRadians = getHeadingRadians();
+    headingController.reset(driverHeadingTargetRadians);
   }
 
   /**
@@ -259,6 +260,10 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Command driveCmd(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     return run(() -> drive(xSpeed, ySpeed, rot, fieldRelative));
+  }
+
+    public Command stopCmd() {
+    return runOnce(() -> stop());
   }
 
   /**
@@ -347,9 +352,8 @@ public class DriveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("vx", vx);
     SmartDashboard.putNumber("vy", vy);
     SmartDashboard.putNumber("omega", omega);
-    var log = DataLogManager.getLog();
-    var myDoubleLog = new DoubleLogEntry(log, "omega");
-    myDoubleLog.append(omega);
+    SmartDashboard.putNumber("Sample Heading", sample.heading);
+    SmartDashboard.putNumber("Sample Omega", sample.omega);
 
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         vx,
@@ -381,7 +385,50 @@ public class DriveSubsystem extends SubsystemBase {
     });
   }
 
-  public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
+  public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
+    final double kdb = 0.17;
+    return run(() -> {
+      double requestedTurnRate = rotationSupplier.getAsDouble();
+      double currentHeading = getHeadingRadians();
+      double turnSpeed;
+      if(Math.abs(requestedTurnRate) < kdb) {
+        //if(Math.abs(previousTurnRate) >= kdb) FIX
+          driverHeadingTargetRadians = currentHeading;
+        turnSpeed = headingController.calculate(currentHeading, driverHeadingTargetRadians);
+      } else {
+        turnSpeed = requestedTurnRate;
+        driverHeadingTargetRadians = currentHeading;
+      }
+      previousTurnRate = requestedTurnRate;
+      drive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), turnSpeed, fieldRelativeSupplier.getAsBoolean());
+    }).beforeStarting(() -> {
+      driverHeadingTargetRadians = getHeadingRadians();
+      previousTurnRate = 0;
+      headingController.enableContinuousInput(-Math.PI, Math.PI);
+    });
+  }
+
+  /**
+   * See {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double)}.
+   */
+  public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds) {
+    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds);
+  }
+
+  /**
+   * See
+   * {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double, Matrix)}.
+   */
+  public void addVisionMeasurement(
+      Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds, stdDevs);
+  }
+}
+
+
+
+/*
+ * public Command driveWithPIDStabilization(DoubleSupplier xSupplier, DoubleSupplier ySupplier,
       DoubleSupplier rotationSupplier, BooleanSupplier fieldRelativeSupplier) {
 
     final double maxDifference = Math.PI / 4;
@@ -429,20 +476,6 @@ public class DriveSubsystem extends SubsystemBase {
           previousTurnRate = 0;
         });
   }
+ * 
+ */
 
-  /**
-   * See {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double)}.
-   */
-  public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds) {
-    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds);
-  }
-
-  /**
-   * See
-   * {@link SwerveDrivePoseEstimator#addVisionMeasurement(Pose2d, double, Matrix)}.
-   */
-  public void addVisionMeasurement(
-      Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
-    m_odometry.addVisionMeasurement(visionMeasurement, timestampSeconds, stdDevs);
-  }
-}

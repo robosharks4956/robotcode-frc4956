@@ -31,10 +31,21 @@ public class AprilTagCamera extends SubsystemBase {
   public double currentPitch = 0;
   public double currentYaw = 0;
   public int currentId = 1;
+  public boolean[] hubTags = {false, true, false, false, true, false};
 
   @Override
   public void periodic() {
     calculateTargetRPM();
+  }
+
+  public boolean isHubTag(int id) {
+    int[] hubTags = {2,5,8,9,10,11};
+    for(byte i = 0; i < 6; i++) {
+      if((id - 1)%16 + 1 == hubTags[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void calculateTargetRPM() {
@@ -57,9 +68,11 @@ public class AprilTagCamera extends SubsystemBase {
       for (PhotonPipelineResult target : lastTargets) {
         if (target.hasTargets()) {
           var bestTarget = target.getBestTarget();
-          currentPitch = Math.toRadians(bestTarget.getPitch());
-          currentYaw = Math.toRadians(bestTarget.getYaw());
           currentId = bestTarget.getFiducialId();
+          if(isHubTag(currentId)) {
+            currentPitch = Math.toRadians(bestTarget.getPitch());
+            currentYaw = Math.toRadians(bestTarget.getYaw());
+          }
         }
       }
     }
@@ -159,7 +172,7 @@ public class AprilTagCamera extends SubsystemBase {
   public double getRPM_A() {
     
     final double g = 386.089;
-    final double mu = 0.15; // Needs Tuning
+    final double mu = 0.1754; // Needs Tuning
 
     final double y = 58.5; // Needs Measurement
     final double x = getDistance(currentPitch, currentYaw, currentId);
@@ -176,7 +189,7 @@ public class AprilTagCamera extends SubsystemBase {
 
     final double velocity = mu*x/z/Math.cos(shootingAngle);
 
-    return 30/Math.PI * velocity * 1; // final number is the error constant, needs tuning
+    return 30/Math.PI * velocity * 1.19063; // final number is the error constant, needs tuning
 
     /*final double h = 36.75; // in
     final double cameraAngle = 34; // deg
