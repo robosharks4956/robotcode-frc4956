@@ -28,17 +28,16 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.OIConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -110,6 +109,12 @@ public class DriveSubsystem extends SubsystemBase {
   DoubleLogEntry currentHeadingLog;
   DoubleLogEntry headingOutputLog;
 
+   StructArrayPublisher<SwerveModuleState> currentStatePublisher = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("swerve/measuredStates", SwerveModuleState.struct).publish();
+
+  StructArrayPublisher<SwerveModuleState> desiredStatePublisher = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("swerve/desiredStates", SwerveModuleState.struct).publish();
+
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
     // Usage reporting for MAXSwerve template
@@ -150,8 +155,8 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Send swerve module states to the dashboard, can be used with AdvantageScope
     // to see how well the modules are keeping up with targets
-    SmartDashboard.putNumberArray("swerve/measuredStates", getModuleStates());
-    SmartDashboard.putNumberArray("swerve/desiredStates", getDesiredModuleStates());
+    currentStatePublisher.set(getModuleStates());
+    desiredStatePublisher.set(getDesiredModuleStates());
     
     ChassisSpeeds measuredChassisSpeeds = getRobotVelocity();
     double[] measuredSpeeds = new double[3]; 
@@ -162,9 +167,9 @@ public class DriveSubsystem extends SubsystemBase {
 
     ChassisSpeeds desiredChassisSpeeds = getDesiredVelocity();
     double[] desiredSpeeds = new double[3]; 
-    desiredSpeeds[1] = measuredChassisSpeeds.vyMetersPerSecond;
-    desiredSpeeds[0] = measuredChassisSpeeds.vxMetersPerSecond;
-    desiredSpeeds[2] = Math.toDegrees(measuredChassisSpeeds.omegaRadiansPerSecond);
+    desiredSpeeds[1] = desiredChassisSpeeds.vyMetersPerSecond;
+    desiredSpeeds[0] = desiredChassisSpeeds.vxMetersPerSecond;
+    desiredSpeeds[2] = Math.toDegrees(desiredChassisSpeeds.omegaRadiansPerSecond);
     SmartDashboard.putNumberArray("swerve/desiredChassisSpeeds", desiredSpeeds);
 
     SmartDashboard.putNumber("swerve/robotRotation", getHeadingDegrees());
@@ -377,13 +382,22 @@ public class DriveSubsystem extends SubsystemBase {
     var vy = sample.vy + yController.calculate(pose.getY(), sample.y);
     var omega = sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading);
 
+    // These are the speeds and positions the trajectory is supposed to be at at this point in time
+    SmartDashboard.putNumber("sample/vx", sample.vx);
+    SmartDashboard.putNumber("sample/vy", sample.vy);
+    SmartDashboard.putNumber("sample/omega", sample.omega);
+    SmartDashboard.putNumber("sample/x", sample.x);
+    SmartDashboard.putNumber("sample/y", sample.y);
+    SmartDashboard.putNumber("sample/heading", sample.heading);
+
+    // These are the calculated speeds to set on the swerve drive based on where we're supposed to be
     SmartDashboard.putNumber("vx", vx);
     SmartDashboard.putNumber("vy", vy);
     SmartDashboard.putNumber("omega", omega);
 
-    currentHeadingLog.log(pose.getRotation().getDegrees());
-    targetHeadingLog.log(Units.radiansToDegrees(sample.heading));
-    headingOutputLog.log(omega);
+    currentHeadingLog.append(pose.getRotation().getDegrees());
+    targetHeadingLog.append(Units.radiansToDegrees(sample.heading));
+    headingOutputLog.append(omega);
 
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         vx,
@@ -430,8 +444,12 @@ public class DriveSubsystem extends SubsystemBase {
       driverHeadingTargetRadians = MathUtil.clamp(driverHeadingTargetRadians, currentHeading - maxDifference,
           currentHeading + maxDifference);
 
-      // SmartDashboard.putNumber("Current Heading rad", currentHeading);
-      // SmartDashboard.putNumber("Target Heading rad", driverHeadingTargetRadians);
+      driverHeadingTargetRadians = MathUtil.angleModulus(driverHeadingTargetRadians);
+      currentHeading = MathUtil.angleModulus(currentHeading);
+
+      SmartDashboard.putNumber("Drive Turn Speed", requestedTurnRate);
+      SmartDashboard.putNumber("Drive Current Heading rad", currentHeading);
+      SmartDashboard.putNumber("Drive Target Heading rad", driverHeadingTargetRadians);
 
       double turnSpeed = requestedTurnRate;
 
@@ -459,7 +477,7 @@ public class DriveSubsystem extends SubsystemBase {
         // starting point, and reset the timer
         .beforeStarting(() -> {
           // Save current rotation in radians as a starting point
-          driverHeadingTargetRadians = getHeadingRadians();
+          driverHeadingTargetRadians = MathUtil.angleModulus(getHeadingRadians());
           previousTurnRate = 0;
         });
   }
