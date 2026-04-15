@@ -106,11 +106,9 @@ public class DriveSubsystem extends SubsystemBase {
       stateStdDevs,
       visionMeasurementStdDevs);
 
-  StructArrayPublisher<SwerveModuleState> currentStatePublisher = NetworkTableInstance.getDefault()
-      .getStructArrayTopic("CurrentStates", SwerveModuleState.struct).publish();
-
-  StructArrayPublisher<SwerveModuleState> desiredStatePublisher = NetworkTableInstance.getDefault()
-      .getStructArrayTopic("DesiredStates", SwerveModuleState.struct).publish();
+  DoubleLogEntry targetHeadingLog;
+  DoubleLogEntry currentHeadingLog;
+  DoubleLogEntry headingOutputLog;
 
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
@@ -120,6 +118,10 @@ public class DriveSubsystem extends SubsystemBase {
     //SmartDashboard.putData("HeadingPID", headingController);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
+    DataLog log = DataLogManager.getLog();
+    targetHeadingLog = new DoubleLogEntry(log, "/drivesubsystem/TargetHeading");
+    currentHeadingLog = new DoubleLogEntry(log, "/drivesubsystem/CurrentHeading");
+    headingOutputLog = new DoubleLogEntry(log, "/drivesubsystem/HeadingOutput");
   }
 
   @Override
@@ -148,8 +150,24 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Send swerve module states to the dashboard, can be used with AdvantageScope
     // to see how well the modules are keeping up with targets
-    currentStatePublisher.set(getModuleStates());
-    desiredStatePublisher.set(getDesiredModuleStates());
+    SmartDashboard.putNumberArray("swerve/measuredStates", getModuleStates());
+    SmartDashboard.putNumberArray("swerve/desiredStates", getDesiredModuleStates());
+    
+    ChassisSpeeds measuredChassisSpeeds = getRobotVelocity();
+    double[] measuredSpeeds = new double[3]; 
+    measuredSpeeds[1] = measuredChassisSpeeds.vyMetersPerSecond;
+    measuredSpeeds[0] = measuredChassisSpeeds.vxMetersPerSecond;
+    measuredSpeeds[2] = Math.toDegrees(measuredChassisSpeeds.omegaRadiansPerSecond);
+    SmartDashboard.putNumberArray("swerve/measuredChassisSpeeds", measuredSpeeds);
+
+    ChassisSpeeds desiredChassisSpeeds = getDesiredVelocity();
+    double[] desiredSpeeds = new double[3]; 
+    desiredSpeeds[1] = measuredChassisSpeeds.vyMetersPerSecond;
+    desiredSpeeds[0] = measuredChassisSpeeds.vxMetersPerSecond;
+    desiredSpeeds[2] = Math.toDegrees(measuredChassisSpeeds.omegaRadiansPerSecond);
+    SmartDashboard.putNumberArray("swerve/desiredChassisSpeeds", desiredSpeeds);
+
+    SmartDashboard.putNumber("swerve/robotRotation", getHeadingDegrees());
   }
 
   /**
@@ -286,6 +304,21 @@ public class DriveSubsystem extends SubsystemBase {
     });
   }
 
+    /**
+   * Gets the current robot-relative velocity (x, y and omega) of the robot
+   *
+   * @return A ChassisSpeeds object of the current robot-relative velocity
+   */
+  public ChassisSpeeds getRobotVelocity()
+  {
+    return DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
+  }
+
+    public ChassisSpeeds getDesiredVelocity()
+  {
+    return DriveConstants.kDriveKinematics.toChassisSpeeds(getDesiredModuleStates());
+  }
+
   /**
    * Sets the swerve ModuleStates.
    *
@@ -347,9 +380,10 @@ public class DriveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("vx", vx);
     SmartDashboard.putNumber("vy", vy);
     SmartDashboard.putNumber("omega", omega);
-    var log = DataLogManager.getLog();
-    var myDoubleLog = new DoubleLogEntry(log, "omega");
-    myDoubleLog.append(omega);
+
+    currentHeadingLog.log(pose.getRotation().getDegrees());
+    targetHeadingLog.log(Units.radiansToDegrees(sample.heading));
+    headingOutputLog.log(omega);
 
     ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
         vx,
