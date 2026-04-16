@@ -31,7 +31,6 @@ public class AprilTagCamera extends SubsystemBase {
   public double currentPitch = 0;
   public double currentYaw = 0;
   public int currentId = 1;
-  public boolean[] hubTags = {false, true, false, false, true, false};
 
   @Override
   public void periodic() {
@@ -78,7 +77,9 @@ public class AprilTagCamera extends SubsystemBase {
     }
 
     SmartDashboard.putNumber("targetRPM", getRPM_A());
+    SmartDashboard.putNumber("TagDistance", 35.875/Math.tan(34*Math.PI/180 + currentPitch));
     SmartDashboard.putNumber("distance", getDistance(currentPitch, currentYaw, currentId));
+    SmartDashboard.putNumber("currentId", currentId);
     SmartDashboard.putNumber("Pitch", currentPitch);
 
     // TODO: Speed the above code up somehow, we're overrunning the loop, this is the longest periodic function
@@ -177,7 +178,7 @@ public class AprilTagCamera extends SubsystemBase {
     final double y = 58.5; // Needs Measurement
     final double x = getDistance(currentPitch, currentYaw, currentId);
     
-    final double shootingAngle = Math.toRadians(73.5); // needs measurement
+    final double shootingAngle = Math.toRadians(73); // needs measurement
 
     final double C = Math.exp( mu*mu/g * (y - x*Math.tan(shootingAngle)));
 
@@ -189,7 +190,7 @@ public class AprilTagCamera extends SubsystemBase {
 
     final double velocity = mu*x/z/Math.cos(shootingAngle);
 
-    return 30/Math.PI * velocity * 1.19063; // final number is the error constant, needs tuning
+    return 30/Math.PI * velocity * 1.19; // final number is the error constant, needs tuning
 
     /*final double h = 36.75; // in
     final double cameraAngle = 34; // deg
