@@ -84,4 +84,8 @@ public class Arm extends SubsystemBase {
       motorClosedLoopController.setSetpoint(targetPosition, ControlType.kPosition, ClosedLoopSlot.fromInt(0), 0);
     }).finallyDo(() -> armMotor.set(0));
   }
+
+  public Command lowerArmCmd() {
+    return setSpeedCmd(-0.6).withTimeout(0.6);
+  }
 }

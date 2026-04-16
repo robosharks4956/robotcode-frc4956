@@ -99,36 +99,54 @@ public class RobotContainer {
     );
 
 
-    //FIx
-    //CommandScheduler.getInstance().schedule(autoFactory.warmupCmd());
-
     // Populate auton choices on dashboard
     SmartDashboard.putData("Autonomous Chooser", chooser);
 
     chooser.addOption("#1 Nothing", new InstantCommand());
 
     // Shoot pre-loaded balls immediately
-    chooser.setDefaultOption("#2 Shoot", shootCmd());
+    chooser.setDefaultOption("#2 Shoot", Commands.sequence(
+        arm.lowerArmCmd(),
+        shootCmd()));
 
     // Wait 5 seconds then shoot all pre-loaded balls
     chooser.addOption("#3 ShootDelay5sec", Commands.sequence(
-        new WaitCommand(5), // 5s delay to start
+        new WaitCommand(5),
+        arm.lowerArmCmd(),
         shootCmd()));
 
-    chooser.addOption("#4 ShootPickupDepot", Commands.sequence(
+    chooser.addOption("#4 LeftDepot", Commands.sequence(
+        autoFactory.resetOdometry("LeftRotateToShoot"),
+        autoFactory.trajectoryCmd("LeftRotateToShoot"),
+        robotDrive.stopCmd(),
+        arm.lowerArmCmd(),
         shootCmd(),
-        robotDrive.driveCmd(0, 0, 0, fieldRelative).withTimeout(0.5),
-        Commands.parallel(
-            robotDrive.driveCmd(-0.5, 0, 0, fieldRelative),
-            intake.intakeCmd(1))));
+        autoFactory.resetOdometry("CenterToDepot"),
+        Commands.parallel(        
+            autoFactory.trajectoryCmd("CenterToDepot"),
+            intake.intakeCmd(1).withTimeout(2)),
+        autoFactory.resetOdometry("DepotToCenter"),
+        autoFactory.trajectoryCmd("DepotToCenter"),
+        robotDrive.stopCmd()));
 
-    chooser.addOption("Trajectory test", getTrajectoryCommand());
-
-    chooser.addOption("ChoreoShooter", Commands.sequence(
-        autoFactory.resetOdometry("Shooter"),
-        autoFactory.trajectoryCmd("Shooter")));
+    chooser.addOption("#5 RightDepot", Commands.sequence(
+        autoFactory.resetOdometry("RightRotateToShoot"),
+        autoFactory.trajectoryCmd("RightRotateToShoot"),
+        robotDrive.stopCmd(),
+        arm.lowerArmCmd(),
+        shootCmd(),
+        autoFactory.resetOdometry("RightShootToCenter"),
+        autoFactory.trajectoryCmd("RightShootToCenter"),
+        autoFactory.resetOdometry("CenterToDepot"),
+        Commands.parallel(        
+            autoFactory.trajectoryCmd("CenterToDepot"),
+            intake.intakeCmd(1).withTimeout(2)),
+        autoFactory.resetOdometry("DepotToCenter"),
+        autoFactory.trajectoryCmd("DepotToCenter"),
+        robotDrive.stopCmd()));
 
     chooser.addOption("ChoreoCenterpointer", Commands.sequence(
+        arm.lowerArmCmd(),
         shootCmd(),
         autoFactory.resetOdometry("Centerpointer"),
         autoFactory.trajectoryCmd("Centerpointer")));
@@ -143,20 +161,8 @@ public class RobotContainer {
     chooser.addOption("RotateToShoot", Commands.sequence(
         autoFactory.resetOdometry("RotateToShoot"),
         autoFactory.trajectoryCmd("RotateToShoot"),
+        arm.lowerArmCmd(),
         shootCmd()));
-
-    chooser.addOption("LeftStart", Commands.sequence(
-        autoFactory.resetOdometry("RotateToShoot"),
-        autoFactory.trajectoryCmd("RotateToShoot"),
-        robotDrive.stopCmd(),
-        shootCmd(),
-        autoFactory.resetOdometry("CenterToDepot"),
-        Commands.parallel(        
-            autoFactory.trajectoryCmd("CenterToDepot"),
-            intake.intakeCmd(1).withTimeout(2)),
-        autoFactory.resetOdometry("DepotToCenter"),
-        autoFactory.trajectoryCmd("DepotToCenter"),
-        robotDrive.stopCmd()));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -171,7 +177,6 @@ public class RobotContainer {
     // so it'd simplify the code
 
     return Commands.sequence(
-        arm.setSpeedCmd(-0.6).withTimeout(0.6),
         // Spin up the shooter for a bit to save on running the agitator for no reason
         // Shoot majority of the fuel
         Commands.parallel(
