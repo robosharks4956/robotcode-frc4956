@@ -127,7 +127,7 @@ public class RobotContainer {
             intake.intakeCmd(1).withTimeout(2)),
         autoFactory.resetOdometry("DepotToCenter"),
         autoFactory.trajectoryCmd("DepotToCenter"),
-        robotDrive.stopCmd()));
+        robotDrive.stopCmd())); //add shoot or something
 
     chooser.addOption("#5 RightDepot", Commands.sequence(
         autoFactory.resetOdometry("RightRotateToShoot"),
@@ -143,7 +143,41 @@ public class RobotContainer {
             intake.intakeCmd(1).withTimeout(2)),
         autoFactory.resetOdometry("DepotToCenter"),
         autoFactory.trajectoryCmd("DepotToCenter"),
-        robotDrive.stopCmd()));
+        robotDrive.stopCmd())); //add shoot or something 
+
+    chooser.addOption("#6 LeftNeutralZone;", Commands.sequence(
+        autoFactory.resetOdometry("FarLeftRotateToShoot"),
+        autoFactory.trajectoryCmd("FarLeftRotateToShoot"),
+        robotDrive.stopCmd(),
+        arm.lowerArmCmd(),
+        shootCmd(),
+        autoFactory.resetOdometry("FarLeftMidToNeutral"),
+        Commands.parallel(
+            autoFactory.trajectoryCmd("FarLeftMidToNeutral"),
+            intake.intakeCmd(1).withTimeout(7)), 
+        autoFactory.resetOdometry("FarLeftNeutralToMid"),
+        Commands.parallel(
+            autoFactory.trajectoryCmd("FarLeftNeutralToMid"),
+            intake.intakeCmd(1).withTimeout(1.5)), 
+        robotDrive.stopCmd(),
+        shootCmd()));
+
+    chooser.addOption("#7 RightNeutralZone;", Commands.sequence(
+        autoFactory.resetOdometry("FarRightRotateToShoot"),
+        autoFactory.trajectoryCmd("FarRightRotateToShoot"),
+        robotDrive.stopCmd(),
+        arm.lowerArmCmd(),
+        shootCmd(),
+        autoFactory.resetOdometry("FarRightMidToNeutral"),
+        Commands.parallel(
+            autoFactory.trajectoryCmd("FarRightMidToNeutral"),
+            intake.intakeCmd(1).withTimeout(7)), 
+        autoFactory.resetOdometry("FarRightNeutralToMid"),
+        Commands.parallel(
+            autoFactory.trajectoryCmd("FarRightNeutralToMid"),
+            intake.intakeCmd(1).withTimeout(1.5)), 
+        robotDrive.stopCmd(),
+        shootCmd()));
 
     chooser.addOption("ChoreoCenterpointer", Commands.sequence(
         arm.lowerArmCmd(),
