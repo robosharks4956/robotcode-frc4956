@@ -28,7 +28,7 @@ public class AprilTagCamera extends SubsystemBase {
   public int cameraWidth = 1280;
   public int cameraHeight = 720;
   public List<PhotonPipelineResult> lastTargets;
-  public double cameraAngle = Math.toRadians(34);
+  public double cameraAngle = Math.toRadians(36.5);
   public double currentPitch = 0;
   public double currentYaw = 0;
   public int currentId = 1;
@@ -147,7 +147,7 @@ public class AprilTagCamera extends SubsystemBase {
 
   public double getDistance(double pitch, double yaw, int id) {
     final double[] tagOffsets = {200, 23.5, 200, 200, 23.5, 200, 200, 27.418, 27.418, 23.5, 27.418, 200, 200, 200, 200, 200}; // NEEDS FIXING
-    final double robotOffset = 3.5;
+    final double robotOffset = 2.5;
 
     final double yCamera = 35.875;
     final double xCamera = yCamera / Math.tan(cameraAngle + pitch);
