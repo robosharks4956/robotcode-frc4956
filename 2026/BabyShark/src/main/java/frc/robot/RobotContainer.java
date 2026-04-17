@@ -127,7 +127,8 @@ public class RobotContainer {
             intake.intakeCmd(1).withTimeout(2)),
         autoFactory.resetOdometry("DepotToCenter"),
         autoFactory.trajectoryCmd("DepotToCenter"),
-        robotDrive.stopCmd())); //add shoot or something
+        robotDrive.stopCmd(),
+        shootCmd()));
 
     chooser.addOption("#5 RightDepot", Commands.sequence(
         autoFactory.resetOdometry("RightRotateToShoot"),
@@ -228,7 +229,7 @@ public class RobotContainer {
             new ShootAndFeed(shooter, feeder, () -> Shooter.kNearShotRpm,
                 () -> true),
             agitator.agitateCmd(),
-            arm.setSpeedCmd(-0.4).withTimeout(0.8)).withTimeout(3));
+            arm.setSpeedCmd(-0.4).withTimeout(0.8)).withTimeout(1.5));
   }
 
   /**
