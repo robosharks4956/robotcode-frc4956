@@ -28,6 +28,7 @@ public class AprilTagCamera extends SubsystemBase {
   public int cameraWidth = 1280;
   public int cameraHeight = 720;
   public List<PhotonPipelineResult> lastTargets;
+  public double cameraAngle = Math.toRadians(34);
   public double currentPitch = 0;
   public double currentYaw = 0;
   public int currentId = 1;
@@ -70,7 +71,7 @@ public class AprilTagCamera extends SubsystemBase {
           currentId = bestTarget.getFiducialId();
           if(isHubTag(currentId)) {
             currentPitch = Math.toRadians(bestTarget.getPitch());
-            currentYaw = Math.toRadians(bestTarget.getYaw());
+            currentYaw = Math.atan(Math.tan(Math.toRadians(bestTarget.getYaw()))/Math.cos(cameraAngle));
           }
         }
       }
@@ -148,7 +149,6 @@ public class AprilTagCamera extends SubsystemBase {
     final double[] tagOffsets = {200, 23.5, 200, 200, 23.5, 200, 200, 27.418, 27.418, 23.5, 27.418, 200, 200, 200, 200, 200}; // NEEDS FIXING
     final double robotOffset = 3.5;
 
-    final double cameraAngle = Math.toRadians(34);
     final double yCamera = 35.875;
     final double xCamera = yCamera / Math.tan(cameraAngle + pitch);
 
@@ -173,7 +173,7 @@ public class AprilTagCamera extends SubsystemBase {
   public double getRPM_A() {
     
     final double g = 386.089;
-    final double mu = 0.1754; // Needs Tuning
+    final double mu = 0.17; // Needs Tuning
 
     final double y = 58.5; // Needs Measurement
     final double x = getDistance(currentPitch, currentYaw, currentId);
