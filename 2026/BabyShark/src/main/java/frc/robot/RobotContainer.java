@@ -144,7 +144,8 @@ public class RobotContainer {
             intake.intakeCmd(1).withTimeout(2)),
         autoFactory.resetOdometry("DepotToCenter"),
         autoFactory.trajectoryCmd("DepotToCenter"),
-        robotDrive.stopCmd())); //add shoot or something 
+        robotDrive.stopCmd(),
+        shootCmd())); 
 
     chooser.addOption("#6 LeftNeutralZone;", Commands.sequence(
         autoFactory.resetOdometry("FarLeftRotateToShoot"),
@@ -178,6 +179,13 @@ public class RobotContainer {
             autoFactory.trajectoryCmd("FarRightNeutralToMid"),
             intake.intakeCmd(1).withTimeout(1.5)), 
         robotDrive.stopCmd(),
+        shootCmd()));
+
+    chooser.addOption("#8 LeftBackupShoot", Commands.sequence(
+        autoFactory.resetOdometry("LeftBackupShoot"),
+        autoFactory.trajectoryCmd("LeftBackupShoot"),
+        robotDrive.stopCmd(),
+        arm.lowerArmCmd(),
         shootCmd()));
 
     chooser.addOption("ChoreoCenterpointer", Commands.sequence(
