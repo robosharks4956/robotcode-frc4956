@@ -283,7 +283,7 @@ public class RobotContainer {
 
     // Driver start button resets the gyro
     driverController
-        .start()
+        .povDown()
         .onTrue(new InstantCommand(robotDrive::zeroHeading, robotDrive));
 
     // Driver back button toggles field relative / robot relative with a different
